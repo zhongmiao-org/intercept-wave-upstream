@@ -1,9 +1,11 @@
 package common
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"time"
 )
@@ -30,6 +32,21 @@ type respWriter struct {
 func (rw *respWriter) WriteHeader(code int) {
 	rw.status = code
 	rw.ResponseWriter.WriteHeader(code)
+}
+
+// Support WebSocket upgrade by delegating Hijack to the underlying writer when available.
+func (rw *respWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := rw.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+	return nil, nil, fmt.Errorf("hijacker not supported")
+}
+
+// Pass-through flush for streaming responses if supported.
+func (rw *respWriter) Flush() {
+	if f, ok := rw.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
 }
 
 func JSON(w http.ResponseWriter, status int, payload any) {
