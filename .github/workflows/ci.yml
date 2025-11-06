@@ -68,16 +68,8 @@ jobs:
           QODANA_ENDPOINT: 'https://qodana.cloud'
 
   releaseDraft:
-    # Only run when VERSION or CHANGELOG.md changed on main
-    if: >-
-      ${{
-        github.event_name == 'push' &&
-        github.ref == 'refs/heads/main' &&
-        (
-          contains(toJson(github.event.commits), 'VERSION') ||
-          contains(toJson(github.event.commits), 'CHANGELOG.md')
-        )
-      }}
+    name: Release draft
+    if: github.event_name != 'pull_request'
     needs: [ build, qodana ]
     runs-on: ubuntu-latest
     permissions:
