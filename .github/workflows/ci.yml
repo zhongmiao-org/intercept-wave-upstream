@@ -68,7 +68,17 @@ jobs:
           QODANA_ENDPOINT: 'https://qodana.cloud'
 
   releaseDraft:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Only run when VERSION or CHANGELOG.md changed on main
+    if: >-
+      ${{ github.event_name == 'push' &&
+          github.ref == 'refs/heads/main' &&
+          (
+            contains(github.event.head_commit.added, 'VERSION') ||
+            contains(github.event.head_commit.modified, 'VERSION') ||
+            contains(github.event.head_commit.added, 'CHANGELOG.md') ||
+            contains(github.event.head_commit.modified, 'CHANGELOG.md')
+          )
+      }}
     needs: [ build, qodana ]
     runs-on: ubuntu-latest
     permissions:
