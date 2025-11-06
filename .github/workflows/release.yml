@@ -87,6 +87,30 @@ jobs:
           echo "released=$REL" >> $GITHUB_OUTPUT
           echo "next=$NEXT" >> $GITHUB_OUTPUT
 
+      - name: Promote Unreleased notes in CHANGELOG to released section
+        run: |
+          REL='${{ steps.ver.outputs.released }}'
+          DATE=$(date -u +%Y-%m-%d)
+          # Extract sections
+          awk 'BEGIN{h=1} /^## \[Unreleased\]/{print; h=0; next} h{print}' CHANGELOG.md > _header.txt
+          awk '/^## \[Unreleased\]/{flag=1; next} /^## \[/{flag=0} flag' CHANGELOG.md > _unrel.txt
+          awk 'BEGIN{s=0} /^## \[Unreleased\]/{s=1; next} s&&/^## \[/{p=1} p{print}' CHANGELOG.md > _tail.txt
+          # If no unreleased content, keep placeholder
+          if ! [ -s _unrel.txt ]; then echo "- No changes." > _unrel.txt; fi
+          {
+            cat _header.txt
+            echo
+            echo "- No changes yet."
+            echo
+            echo "## [${REL}] - ${DATE}"
+            echo
+            cat _unrel.txt
+            echo
+            cat _tail.txt
+          } > CHANGELOG.md.new
+          mv CHANGELOG.md.new CHANGELOG.md
+          rm -f _header.txt _unrel.txt _tail.txt
+
       - name: Update VERSION
         run: |
           echo "${{ steps.ver.outputs.next }}" > VERSION

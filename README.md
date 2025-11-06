@@ -54,6 +54,131 @@ Connect to:
 - `ws://localhost:9004/ws/ticker?interval=1000` — periodic messages
 - `ws://localhost:9005/ws/timeline` — fixed sequence then close
 
+## HTTP Endpoints and Examples
+
+Base endpoints (all HTTP services expose these):
+
+- GET /
+  - Response:
+    ```json
+    {
+      "service": "user-service",
+      "port": 9000,
+      "interceptPrefix": "/api",
+      "message": "Upstream running"
+    }
+    ```
+- GET /health
+  - Response: `{"status":"ok"}`
+- GET /status/418
+  - Response: `{"status":418}` (status code: 418)
+- GET /delay/500
+  - Response after ~500ms: `{"delayedMs":500}`
+- POST /echo (also supports PUT/PATCH)
+  - Request: `curl -X POST http://localhost:9000/echo -d '{"name":"abc"}' -H 'Content-Type: application/json'`
+  - Response:
+    ```json
+    {
+      "method": "POST",
+      "path": "/echo",
+      "query": "",
+      "length": 13,
+      "body": "{\"name\":\"abc\"}"
+    }
+    ```
+- GET /headers (echo selected request headers)
+  - Request: `curl -H 'Authorization: Bearer 123' http://localhost:9001/headers`
+  - Response: `{"headers":{"Authorization":"Bearer 123"}}`
+- GET /cookies (echo request cookies)
+  - Request: `curl -H 'Cookie: sid=abc; user=tom' http://localhost:9002/cookies`
+  - Response: `{"cookies":{"sid":"abc","user":"tom"}}`
+- GET /large?size=64
+  - Response (truncated):
+    ```json
+    { "size": 64, "data": "aaaaaaaaaaaaaaaa..." }
+    ```
+
+Service-specific endpoints:
+
+1) User service (9000, interceptPrefix=/api)
+
+- GET /api/user/info
+  - Response:
+    ```json
+    {
+      "code": 0,
+      "data": {
+        "id": 1,
+        "name": "张三",
+        "email": "zhangsan@example.com"
+      },
+      "message": "success"
+    }
+    ```
+- GET /api/posts
+  - Response (example):
+    ```json
+    {
+      "code": 0,
+      "data": [
+        { "id": 1, "title": "Post 1", "createdAt": "2024-01-01T12:00:00Z" },
+        { "id": 2, "title": "Post 2", "createdAt": "2024-01-01T11:00:00Z" }
+      ]
+    }
+    ```
+
+2) Order service (9001, interceptPrefix=/order-api)
+
+- GET /order-api/orders
+  - Response:
+    ```json
+    {
+      "code": 0,
+      "data": [
+        { "id": 1001, "status": "CREATED" },
+        { "id": 1002, "status": "PAID" }
+      ]
+    }
+    ```
+- POST /order-api/orders
+  - Request: `curl -X POST http://localhost:9001/order-api/orders -H 'Content-Type: application/json' -d '{"sku":"123","qty":2}'`
+  - Response (201 Created, server adds id):
+    ```json
+    {
+      "code": 0,
+      "data": { "sku": "123", "qty": 2, "id": 54321 }
+    }
+    ```
+- GET /order-api/order/123/submit
+  - Response: `{"message":"submit ok"}`
+
+3) Payment service (9002, interceptPrefix=/pay-api)
+
+- POST /pay-api/checkout
+  - Response (simulated ~150ms delay):
+    ```json
+    {
+      "code": 0,
+      "data": { "paid": true, "amount": 199, "currency": "CNY" },
+      "message": "paid"
+    }
+    ```
+
+## WebSocket Endpoints and Examples
+
+1) Echo (9003)
+- Connect: `ws://localhost:9003/ws/echo`
+- Behavior: server echoes any text/binary frames
+- Example: send `ping` → receive `ping`
+
+2) Ticker (9004)
+- Connect: `ws://localhost:9004/ws/ticker?interval=1000`
+- Behavior: server pushes `tick 1`, `tick 2`, ... every `interval` ms (default 1000)
+
+3) Timeline (9005)
+- Connect: `ws://localhost:9005/ws/timeline`
+- Behavior: server sends `hello`, `processing`, `done`, then closes with normal closure (reason: `bye`)
+
 ## How it pairs with Intercept Wave
 
 - Point the Intercept Wave proxy groups to these services:
@@ -68,8 +193,8 @@ Connect to:
 ## CI & Release
 
 - CI (PR/main): build, vet, test, fmt check.
-- Release draft (push to main): created from the `VERSION` file.
-- Publish release: builds multi-arch images and pushes to GHCR.
+- Release draft (push to main): created using `CHANGELOG.md` Unreleased notes and the `VERSION` file.
+- Publish release: builds multi-arch images and pushes to GHCR. CI promotes `Unreleased` notes into a new versioned section and then bumps `VERSION` (opens auto-merge PR).
 
 Repository configuration:
 - Secrets (optional)
