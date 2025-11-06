@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache: true
+
+      - name: Download modules
+        run: go mod download
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Check formatting
+        run: |
+          CHANGED=$(gofmt -s -l .)
+          if [ -n "$CHANGED" ]; then
+            echo "Run: gofmt -s -w ."; echo "$CHANGED"; exit 1; fi
+
+  releaseDraft:
+    if: github.event_name != 'pull_request'
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Ensure VERSION exists
+        run: |
+          test -f VERSION || (echo '0.1.0' > VERSION)
+
+      - name: Remove old release drafts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/{owner}/{repo}/releases \
+            --jq '.[] | select(.draft == true) | .id' \
+            | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{} || true
+
+      - name: Prepare release notes from CHANGELOG
+        id: notes
+        run: |
+          VERSION="v$(cat VERSION)"
+          # Extract Unreleased section from CHANGELOG.md
+          if [ -f CHANGELOG.md ]; then
+            awk '/^## \[Unreleased\]/{flag=1;next}/^## \[/{flag=0}flag' CHANGELOG.md | sed '/^$/d' > RELEASE_NOTES.txt
+          fi
+          if [ ! -s RELEASE_NOTES.txt ]; then
+            echo "Maintenance release." > RELEASE_NOTES.txt
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.notes.outputs.version }}"
+          gh release create "$VERSION" --draft --title "$VERSION" --notes-file RELEASE_NOTES.txt || true

@@ -1,0 +1,14 @@
+services:
+  upstream:
+    build: .
+    image: ghcr.io/zhongmiao-org/intercept-wave-upstream:dev
+    environment:
+      - BASE_PORT=9000
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+      - "9002:9002"
+      - "9003:9003"
+      - "9004:9004"
+      - "9005:9005"
+    restart: unless-stopped

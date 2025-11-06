@@ -1,0 +1,127 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  docker:
+    name: Build and Push Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      GHCR_REPO: ${{ vars.GHCR_REPO }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: GHCR Login (PAT)
+        if: ${{ secrets.GHCR_TOKEN != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: GHCR Login (GITHUB_TOKEN)
+        if: ${{ secrets.GHCR_TOKEN == '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image name
+        id: img
+        run: |
+          # 固化 GHCR 仓库到 zhongmiao-org/intercept-wave-upstream
+          GHCR_REPO_COMPUTED="ghcr.io/zhongmiao-org/intercept-wave-upstream"
+          echo "GHCR_REPO=$GHCR_REPO_COMPUTED" >> $GITHUB_OUTPUT
+
+      - name: Build and Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ steps.img.outputs.GHCR_REPO }}:latest
+            ${{ steps.img.outputs.GHCR_REPO }}:${{ github.ref_name }}
+
+      - name: Summary
+        run: |
+          echo "Pushed:"
+          echo "  - ${{ steps.img.outputs.GHCR_REPO }}:latest"
+          echo "  - ${{ steps.img.outputs.GHCR_REPO }}:${{ github.ref_name }}"
+
+  postReleaseBump:
+    name: Post-release bump and PR
+    needs: [ docker ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: ver
+        run: |
+          TAG='${{ github.ref_name }}'   # e.g., v0.1.0
+          REL=${TAG#v}
+          IFS='.' read -r MA MI PA <<EOF
+          $REL
+          EOF
+          NEXT="$MA.$MI.$((PA+1))"
+          echo "released=$REL" >> $GITHUB_OUTPUT
+          echo "next=$NEXT" >> $GITHUB_OUTPUT
+
+      - name: Update VERSION
+        run: |
+          echo "${{ steps.ver.outputs.next }}" > VERSION
+
+      - name: Ensure Unreleased section exists in CHANGELOG
+        run: |
+          if ! grep -q "^## \[Unreleased\]" CHANGELOG.md 2>/dev/null; then
+            printf "## [Unreleased]\n\n- Placeholder for upcoming changes.\n\n\n" | cat - CHANGELOG.md > CHANGELOG.md.new && mv CHANGELOG.md.new CHANGELOG.md
+          fi
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/next-${{ steps.ver.outputs.next }}
+          title: "chore: bump version to ${{ steps.ver.outputs.next }}"
+          commit-message: "chore: bump version to ${{ steps.ver.outputs.next }}"
+          body: |
+            Bump version after release `${{ steps.ver.outputs.released }}` to `${{ steps.ver.outputs.next }}`.
+
+            - Update `VERSION`
+            - Ensure `CHANGELOG.md` contains an `Unreleased` section
+          labels: chore, automation
+          signoff: false
+          delete-branch: true
+          draft: false
+          base: main
+          add-paths: |
+            VERSION
+            CHANGELOG.md
+
+      - name: Enable auto-merge
+        if: steps.cpr.outputs.pull-request-number != ''
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+          merge-method: squash

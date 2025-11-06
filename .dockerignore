@@ -1,0 +1,10 @@
+# context minimization
+.git
+.github
+.idea
+.vscode
+build
+bin
+*.log
+**/*_test.go
+**/.DS_Store
