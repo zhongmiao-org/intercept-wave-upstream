@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand/v2"
@@ -41,7 +42,7 @@ func StartAll(base int) []*http.Server {
 		go func(sp ServiceSpec, srv *http.Server) {
 			defer wg.Done()
 			common.Logf("HTTP %s listening on :%d", sp.Name, sp.Port)
-			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				common.Logf("HTTP server %s error: %v", sp.Name, err)
 			}
 		}(s, server)

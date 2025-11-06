@@ -1,6 +1,7 @@
 package wsserver
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -35,7 +36,7 @@ func StartAll(base int) []*http.Server {
 		servers = append(servers, srv)
 		go func(spec WsSpec, s *http.Server) {
 			common.Logf("WS %s listening on :%d", spec.Name, spec.Port)
-			if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				common.Logf("WS server %s error: %v", spec.Name, err)
 			}
 		}(sp, srv)
