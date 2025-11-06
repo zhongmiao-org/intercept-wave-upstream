@@ -70,14 +70,13 @@ jobs:
   releaseDraft:
     # Only run when VERSION or CHANGELOG.md changed on main
     if: >-
-      ${{ github.event_name == 'push' &&
-          github.ref == 'refs/heads/main' &&
-          (
-            contains(github.event.head_commit.added, 'VERSION') ||
-            contains(github.event.head_commit.modified, 'VERSION') ||
-            contains(github.event.head_commit.added, 'CHANGELOG.md') ||
-            contains(github.event.head_commit.modified, 'CHANGELOG.md')
-          )
+      ${{
+        github.event_name == 'push' &&
+        github.ref == 'refs/heads/main' &&
+        (
+          contains(toJson(github.event.commits), 'VERSION') ||
+          contains(toJson(github.event.commits), 'CHANGELOG.md')
+        )
       }}
     needs: [ build, qodana ]
     runs-on: ubuntu-latest
