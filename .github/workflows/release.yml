@@ -13,6 +13,8 @@ jobs:
     if: github.event.release.draft == false && (github.event.action == 'published' || github.event.action == 'prereleased')
     name: Build and Push Docker image (GHCR)
     runs-on: ubuntu-latest
+    env:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
     permissions:
       contents: read
       packages: write
@@ -27,15 +29,15 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: GHCR Login (PAT)
-        if: ${{ secrets.GHCR_TOKEN != '' }}
+        if: ${{ env.GHCR_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
+          password: ${{ env.GHCR_TOKEN }}
 
       - name: GHCR Login (GITHUB_TOKEN)
-        if: ${{ secrets.GHCR_TOKEN == '' }}
+        if: ${{ env.GHCR_TOKEN == '' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
