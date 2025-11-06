@@ -43,9 +43,32 @@ jobs:
           if [ -n "$CHANGED" ]; then
             echo "Run: gofmt -s -w ."; echo "$CHANGED"; exit 1; fi
 
+  qodana:
+    name: Qodana
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@v2025.2
+        with:
+          pr-mode: false
+          cache-default-branch-only: true
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+          QODANA_ENDPOINT: 'https://qodana.cloud'
+
   releaseDraft:
     if: github.event_name != 'pull_request'
-    needs: [ build ]
+    needs: [ build, qodana ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
