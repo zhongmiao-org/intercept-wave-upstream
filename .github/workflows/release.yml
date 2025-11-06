@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   release:
-    name: Publish and Post-bump
+    name: Publish and Changelog
     if: github.event.release.draft == false
     runs-on: ubuntu-latest
     env:
@@ -76,17 +76,12 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Compute next version
+      - name: Compute release version
         id: ver
         run: |
           TAG='${{ github.ref_name }}'   # e.g., v0.1.0
           REL=${TAG#v}
-          IFS='.' read -r MA MI PA <<EOF
-          $REL
-          EOF
-          NEXT="$MA.$MI.$((PA+1))"
           echo "released=$REL" >> $GITHUB_OUTPUT
-          echo "next=$NEXT" >> $GITHUB_OUTPUT
 
       - name: Promote Unreleased notes in CHANGELOG to released section
         run: |
@@ -112,10 +107,6 @@ jobs:
           mv CHANGELOG.md.new CHANGELOG.md
           rm -f _header.txt _unrel.txt _tail.txt
 
-      - name: Update VERSION
-        run: |
-          echo "${{ steps.ver.outputs.next }}" > VERSION
-
       - name: Ensure Unreleased section exists in CHANGELOG
         run: |
           if ! grep -q "^## \[Unreleased\]" CHANGELOG.md 2>/dev/null; then
@@ -126,21 +117,17 @@ jobs:
         id: cpr
         uses: peter-evans/create-pull-request@v7
         with:
-          branch: chore/next-${{ steps.ver.outputs.next }}
-          title: "chore: bump version to ${{ steps.ver.outputs.next }}"
-          commit-message: "chore: bump version to ${{ steps.ver.outputs.next }}"
+          branch: chore/changelog-${{ steps.ver.outputs.released }}
+          title: "chore(changelog): update for ${{ steps.ver.outputs.released }}"
+          commit-message: "chore(changelog): update for ${{ steps.ver.outputs.released }}"
           body: |
-            Bump version after release `${{ steps.ver.outputs.released }}` to `${{ steps.ver.outputs.next }}`.
-
-            - Update `VERSION`
-            - Ensure `CHANGELOG.md` contains an `Unreleased` section
+            Promote `Unreleased` notes into `## [${{ steps.ver.outputs.released }}]` and ensure a fresh `Unreleased` section exists.
           labels: chore, automation
           signoff: false
           delete-branch: true
           draft: false
           base: main
           add-paths: |
-            VERSION
             CHANGELOG.md
 
       - name: Enable auto-merge

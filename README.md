@@ -1,4 +1,21 @@
+<div align="center">
+
+<img src="docs/logo.svg" alt="Intercept Wave Upstream" height="88" />
+&nbsp;
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/plus-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="docs/plus-light.svg" />
+  <img src="docs/plus-light.svg" alt="+" height="88" />
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://go.dev/images/go-logo-white.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="https://go.dev/images/go-logo-blue.svg" />
+  <img src="https://go.dev/images/go-logo-blue.svg" alt="Go" height="88" />
+</picture>
+
 # Intercept Wave Upstream — Upstream Test Orchestrator
+
 
 [![CI](https://img.shields.io/github/actions/workflow/status/zhongmiao-org/intercept-wave-upstream/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/actions/workflow/status/zhongmiao-org/intercept-wave-upstream/release.yml?label=Release&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/actions/workflows/release.yml)
@@ -8,6 +25,10 @@
 [![GHCR](https://img.shields.io/badge/GHCR-intercept--wave--upstream-2ea44f?logo=github&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/pkgs/container/intercept-wave-upstream)
 [![Platforms](https://img.shields.io/badge/Platforms-amd64%20%7C%20arm64-6aa84f?style=flat-square)](#)
 [![Code Style](https://img.shields.io/badge/code%20style-gofmt-FFD54F?style=flat-square)](#)
+
+[English](README.md) | 简体中文
+
+</div>
 
 This repository provides the official upstream testing services for
 `Intercept Wave` — used for manual verification and CI automation of
@@ -203,7 +224,7 @@ Service-specific endpoints:
 
 - CI (PR/main): build, vet, test, fmt check.
 - Release draft (push to main): created using `CHANGELOG.md` Unreleased notes and the `VERSION` file.
-- Publish release: builds multi-arch images and pushes to GHCR. CI promotes `Unreleased` notes into a new versioned section and then bumps `VERSION` (opens auto-merge PR).
+- Publish release: builds multi-arch images and pushes to GHCR. CI promotes `Unreleased` notes into a new versioned section and opens a PR updating `CHANGELOG.md` on `main`.
 
 Repository configuration:
 - Secrets (optional)

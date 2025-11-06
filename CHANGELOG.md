@@ -6,7 +6,17 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 
 ## [Unreleased]
 
-- No changes yet.
+### Changed
+- CI: releaseDraft now checks all commits in a push to `main` for `VERSION`/`CHANGELOG.md` changes (no longer limited to `head_commit`).
+- CI: unify `release.yml` into a single job that builds images from the release tag and then opens a PR to update `CHANGELOG.md` on `main`.
+- CI: post-release flow no longer bumps `VERSION`; only `CHANGELOG.md` is updated.
+- Docs: unify README headers (centered block with Go + project logo), enlarge header icons for better balance, and align Chinese badges with English.
+
+### Added
+- Docs: add `README_zh.md` and language switch link in `README.md`.
+- Docs: clarify release process and GHCR publishing notes.
+- Assets: add theme-aware plus icons `docs/plus-light.svg` and `docs/plus-dark.svg` and use them between logos in README headers.
+- Docs: switch to SVG project logo (`docs/logo.svg`) in both READMEs for crisp rendering.
 
 ## [0.1.0] - 2025-11-06
 
@@ -41,11 +51,10 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 - `docker-compose.yml` exposing ports 9000–9005 with `BASE_PORT` configurable.
 - CI workflow (`ci.yml`): build, vet, test, gofmt check; push to `main` creates a Release Draft from `CHANGELOG.md` Unreleased notes.
 - Release workflow (`release.yml`): multi-arch (amd64/arm64) build and push to GHCR at `ghcr.io/zhongmiao-org/intercept-wave-upstream`.
-- Post-release automation: compute next patch version, update `VERSION`, ensure `CHANGELOG.md` has an `Unreleased` section, open an auto-merge PR.
+- Post-release automation: promote `Unreleased` into the release section, ensure `CHANGELOG.md` has a fresh `Unreleased` section, and open an auto-merge PR.
 - Documentation:
   - README with container usage, detailed endpoint examples and pairing guidance with Intercept Wave.
   - CHANGELOG initialized with Unreleased.
 - Unit tests:
   - HTTP: service boot and `GET /order-api/orders` returns `{ code: 0, ... }`.
   - WS: echo server connects and echoes payload.
-

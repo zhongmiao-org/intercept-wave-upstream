@@ -1,7 +1,7 @@
 services:
   upstream:
     build: .
-    image: ghcr.io/zhongmiao-org/intercept-wave-upstream:dev
+    image: ghcr.io/zhongmiao-org/intercept-wave-upstream:latest
     environment:
       - BASE_PORT=9000
     ports:
