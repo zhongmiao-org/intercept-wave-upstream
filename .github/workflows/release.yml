@@ -2,11 +2,7 @@ name: Release
 
 on:
   release:
-    types: [ published ]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    types: [prereleased, released]
 
 jobs:
   docker:
