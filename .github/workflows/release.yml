@@ -2,10 +2,15 @@ name: Release
 
 on:
   release:
-    types: [prereleased, released]
+    types: [published, prereleased]
+
+concurrency:
+  group: release-${{ github.event.release.tag_name || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   docker:
+    if: github.event.release.draft == false && (github.event.action == 'published' || github.event.action == 'prereleased')
     name: Build and Push Docker image (GHCR)
     runs-on: ubuntu-latest
     permissions:
@@ -60,6 +65,7 @@ jobs:
 
   postReleaseBump:
     name: Post-release bump and PR
+    if: github.event.release.draft == false && (github.event.action == 'published' || github.event.action == 'prereleased')
     needs: [ docker ]
     runs-on: ubuntu-latest
     permissions:
@@ -145,4 +151,3 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
           merge-method: squash
-

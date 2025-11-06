@@ -1,5 +1,14 @@
 # Intercept Wave Upstream — Upstream Test Orchestrator
 
+[![CI](https://img.shields.io/github/actions/workflow/status/zhongmiao-org/intercept-wave-upstream/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/actions/workflow/status/zhongmiao-org/intercept-wave-upstream/release.yml?label=Release&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/actions/workflows/release.yml)
+[![GitHub release](https://img.shields.io/github/v/release/zhongmiao-org/intercept-wave-upstream?sort=semver&display_name=tag&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&style=flat-square)](https://go.dev/)
+[![GHCR](https://img.shields.io/badge/GHCR-intercept--wave--upstream-2ea44f?logo=github&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/pkgs/container/intercept-wave-upstream)
+[![Platforms](https://img.shields.io/badge/Platforms-amd64%20%7C%20arm64-6aa84f?style=flat-square)](#)
+[![Code Style](https://img.shields.io/badge/code%20style-gofmt-FFD54F?style=flat-square)](#)
+
 This repository provides the official upstream testing services for
 `Intercept Wave` — used for manual verification and CI automation of
 forwarding, matching and WebSocket features.
