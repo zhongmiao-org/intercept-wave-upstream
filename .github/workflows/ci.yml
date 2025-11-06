@@ -4,7 +4,6 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
     types: [ opened, synchronize, reopened, ready_for_review ]
   release:
     types: [ published ]
@@ -71,7 +70,7 @@ jobs:
           QODANA_ENDPOINT: 'https://qodana.cloud'
 
   releaseDraft:
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [ build, qodana ]
     runs-on: ubuntu-latest
     permissions:
