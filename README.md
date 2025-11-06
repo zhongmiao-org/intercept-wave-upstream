@@ -1,7 +1,7 @@
 <div align="center">
 
-<img src="docs/logo.svg" alt="Intercept Wave Upstream" height="88" />
-&nbsp;
+<img src="docs/logo.svg" alt="Intercept Wave Upstream" height="88" width="88" />
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/plus-dark.svg" />
   <source media="(prefers-color-scheme: light)" srcset="docs/plus-light.svg" />
