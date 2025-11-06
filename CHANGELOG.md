@@ -6,6 +6,11 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 
 ## [Unreleased]
 
+- No changes yet.
+
+## [0.1.1] - 2025-11-06
+
+
 ### Changed
 - CI: releaseDraft now checks all commits in a push to `main` for `VERSION`/`CHANGELOG.md` changes (no longer limited to `head_commit`).
 - CI: unify `release.yml` into a single job that builds images from the release tag and then opens a PR to update `CHANGELOG.md` on `main`.
@@ -17,6 +22,7 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 - Docs: clarify release process and GHCR publishing notes.
 - Assets: add theme-aware plus icons `docs/plus-light.svg` and `docs/plus-dark.svg` and use them between logos in README headers.
 - Docs: switch to SVG project logo (`docs/logo.svg`) in both READMEs for crisp rendering.
+
 
 ## [0.1.0] - 2025-11-06
 
