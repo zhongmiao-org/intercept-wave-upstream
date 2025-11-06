@@ -6,6 +6,11 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 
 ## [Unreleased]
 
+- No changes yet.
+
+## [0.1.0] - 2025-11-06
+
+
 ### Added
 - Go 1.25 module that boots a lightweight upstream test orchestrator for Intercept Wave.
 - 3 HTTP services on consecutive ports (BASE_PORT..BASE_PORT+2, default 9000–9002), each providing shared utility endpoints:
@@ -43,3 +48,4 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 - Unit tests:
   - HTTP: service boot and `GET /order-api/orders` returns `{ code: 0, ... }`.
   - WS: echo server connects and echoes payload.
+
