@@ -26,7 +26,7 @@
 [![Platforms](https://img.shields.io/badge/Platforms-amd64%20%7C%20arm64-6aa84f?style=flat-square)](#)
 [![Code Style](https://img.shields.io/badge/code%20style-gofmt-FFD54F?style=flat-square)](#)
 
-[English](README.md) | 简体中文
+English | [简体中文](README_zh.md)
 
 </div>
 
