@@ -107,10 +107,40 @@ jobs:
           mv CHANGELOG.md.new CHANGELOG.md
           rm -f _header.txt _unrel.txt _tail.txt
 
+      - name: Promote Unreleased notes in CHANGELOG_zh to released section
+        run: |
+          REL='${{ steps.ver.outputs.released }}'
+          DATE=$(date -u +%Y-%m-%d)
+          if [ -f CHANGELOG_zh.md ]; then
+            awk 'BEGIN{h=1} /^## \[未发布\]/{print; h=0; next} h{print}' CHANGELOG_zh.md > _zh_header.txt
+            awk '/^## \[未发布\]/{flag=1; next} /^## \[/{flag=0} flag' CHANGELOG_zh.md > _zh_unrel.txt
+            awk 'BEGIN{s=0} /^## \[未发布\]/{s=1; next} s&&/^## \[/{p=1} p{print}' CHANGELOG_zh.md > _zh_tail.txt
+            if ! [ -s _zh_unrel.txt ]; then echo "- 暂无变更。" > _zh_unrel.txt; fi
+            {
+              cat _zh_header.txt
+              echo
+              echo "- 暂无变更。"
+              echo
+              echo "## [${REL}] - ${DATE}"
+              echo
+              cat _zh_unrel.txt
+              echo
+              cat _zh_tail.txt
+            } > CHANGELOG_zh.md.new
+            mv CHANGELOG_zh.md.new CHANGELOG_zh.md
+            rm -f _zh_header.txt _zh_unrel.txt _zh_tail.txt
+          fi
+
       - name: Ensure Unreleased section exists in CHANGELOG
         run: |
           if ! grep -q "^## \[Unreleased\]" CHANGELOG.md 2>/dev/null; then
             printf "## [Unreleased]\n\n- Placeholder for upcoming changes.\n\n\n" | cat - CHANGELOG.md > CHANGELOG.md.new && mv CHANGELOG.md.new CHANGELOG.md
+          fi
+
+      - name: Ensure Unreleased section exists in CHANGELOG_zh
+        run: |
+          if [ -f CHANGELOG_zh.md ] && ! grep -q "^## \[未发布\]" CHANGELOG_zh.md 2>/dev/null; then
+            printf "## [未发布]\n\n- 预留后续变更。\n\n\n" | cat - CHANGELOG_zh.md > CHANGELOG_zh.md.new && mv CHANGELOG_zh.md.new CHANGELOG_zh.md
           fi
 
       - name: Create Pull Request
@@ -129,6 +159,7 @@ jobs:
           base: main
           add-paths: |
             CHANGELOG.md
+            CHANGELOG_zh.md
 
       - name: Enable auto-merge
         if: steps.cpr.outputs.pull-request-number != ''
