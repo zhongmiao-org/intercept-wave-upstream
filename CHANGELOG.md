@@ -6,7 +6,26 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 
 ## [Unreleased]
 
-- No changes yet.
+### Added
+- WS: food-delivery simulation endpoints on all WS services
+  - `ws://.../ws/food/user` and `ws://.../ws/food/merchant`
+  - Diverse event key per service: `type` (ws-echo), `action` (ws-ticker), `event` (ws-timeline)
+  - Supports `?interval=` throttling and asset-driven payloads with fallbacks
+- HTTP: RESTful demo endpoints available on all HTTP services
+  - `GET|POST|OPTIONS /rest/items`
+  - `GET|PUT|PATCH|DELETE|OPTIONS /rest/items/{id}` with in-memory store
+- Data: static JSON assets directory with overrideable `ASSETS_DIR`
+  - Endpoints can load from `assets/` (e.g., `user/info.json`, `user/posts.json`, `order/orders.json`, `payment/checkout.json`, `ws/timeline.json`, `ws/food_*.json`, `rest/items.json`)
+- Docs: comprehensive Chinese API list at `docs/接口清单.md`
+  - Full ports and paths, WS token usage, REST endpoints, asset sources, and WS event-key rules
+
+### Changed
+- WS security: enforce a hardcoded token for all WS endpoints
+  - Accept `X-Auth-Token: zhongmiao-org-token` header or `?token=zhongmiao-org-token` query param
+- HTTP/WS behavior: several responses now read from static assets when available, with sensible built-in defaults
+
+### Fixed
+- Docs: normalize JSON examples in `docs/接口清单.md` to valid JSON (arrays/objects) and remove ambiguous placeholders
 
 ## [0.1.1] - 2025-11-06
 
