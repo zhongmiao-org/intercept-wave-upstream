@@ -1,0 +1,5 @@
+[
+  {"type": "new_order",        "orderId": "123456", "items": [{"name": "红烧牛肉面", "qty": 2}], "userAddress": "XX路XX号", "userNote": "不要香菜"},
+  {"type": "order_cancelled",  "orderId": "123456", "reason": "商家拒单"}
+]
+

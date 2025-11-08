@@ -1,0 +1,9 @@
+{
+  "code": 0,
+  "data": [
+    {"id": 2001, "status": "CREATED", "items": [{"sku": "A-1", "qty": 2}], "amount": 49.9, "currency": "CNY"},
+    {"id": 2002, "status": "PAID",    "items": [{"sku": "B-9", "qty": 1}], "amount": 199,  "currency": "CNY"},
+    {"id": 2003, "status": "CANCELLED", "items": [{"sku": "C-3", "qty": 5}], "amount": 10.5, "currency": "CNY"}
+  ]
+}
+

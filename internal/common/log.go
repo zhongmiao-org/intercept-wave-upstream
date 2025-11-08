@@ -72,3 +72,6 @@ func toJSON(v any) string {
 
 // isolated for easy replacement if needed
 var jsonMarshal = func(v any) ([]byte, error) { return json.Marshal(v) }
+
+// JsonMarshalCompat exposes jsonMarshal to other packages for convenience.
+func JsonMarshalCompat(v any) ([]byte, error) { return jsonMarshal(v) }

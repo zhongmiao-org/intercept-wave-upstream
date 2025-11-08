@@ -53,6 +53,54 @@ func StartAll(base int) []*http.Server {
 }
 
 func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
+	// Simple in-memory store for REST demo endpoints (per-service instance)
+	type anyMap = map[string]any
+	items := map[int]anyMap{}
+	nextID := 1
+	var mu sync.Mutex
+
+	// Seed REST items from assets if present
+	if arr, err := common.LoadJSONDynamic(common.JoinAssets("rest", "items.json")); err == nil {
+		if list, ok := arr.([]any); ok {
+			mu.Lock()
+			for _, it := range list {
+				if m, ok := it.(map[string]any); ok {
+					// coerce id
+					id := 0
+					if v, ok := m["id"]; ok {
+						switch t := v.(type) {
+						case float64:
+							id = int(t)
+						case int:
+							id = t
+						case int64:
+							id = int(t)
+						case json.Number:
+							if n, _ := t.Int64(); n > 0 {
+								id = int(n)
+							}
+						}
+					}
+					if id <= 0 {
+						id = nextID
+						nextID++
+						m["id"] = id
+					}
+					if id >= nextID {
+						nextID = id + 1
+					}
+					// shallow copy
+					cp := anyMap{}
+					for k, v := range m {
+						cp[k] = v
+					}
+					items[id] = cp
+				}
+			}
+			mu.Unlock()
+		}
+	}
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		common.JSON(w, 200, map[string]any{
 			"service":         spec.Name,
@@ -131,11 +179,133 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 			"body":   string(b),
 		})
 	})
+
+	// RESTful-style endpoints: /rest/items and /rest/items/{id}
+	mux.HandleFunc("/rest/items", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodOptions:
+			w.Header().Set("Allow", "GET,POST,OPTIONS")
+			w.WriteHeader(http.StatusNoContent)
+			return
+		case http.MethodGet:
+			mu.Lock()
+			list := make([]anyMap, 0, len(items))
+			for _, v := range items {
+				// copy for safety
+				m := anyMap{}
+				for k, vv := range v {
+					m[k] = vv
+				}
+				list = append(list, m)
+			}
+			mu.Unlock()
+			common.JSON(w, 200, map[string]any{"items": list})
+			return
+		case http.MethodPost:
+			b, _ := io.ReadAll(r.Body)
+			_ = r.Body.Close()
+			var in anyMap
+			_ = json.Unmarshal(b, &in)
+			if in == nil {
+				in = anyMap{}
+			}
+			mu.Lock()
+			id := nextID
+			nextID++
+			in["id"] = id
+			items[id] = in
+			mu.Unlock()
+			w.Header().Set("Location", fmt.Sprintf("/rest/items/%d", id))
+			common.JSON(w, http.StatusCreated, in)
+			return
+		default:
+			w.Header().Set("Allow", "GET,POST,OPTIONS")
+			common.JSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
+			return
+		}
+	})
+
+	mux.HandleFunc("/rest/items/", func(w http.ResponseWriter, r *http.Request) {
+		idStr := strings.TrimPrefix(r.URL.Path, "/rest/items/")
+		id, err := strconv.Atoi(idStr)
+		if err != nil || id <= 0 {
+			common.JSON(w, http.StatusBadRequest, map[string]any{"error": "invalid id"})
+			return
+		}
+		switch r.Method {
+		case http.MethodOptions:
+			w.Header().Set("Allow", "GET,PUT,PATCH,DELETE,OPTIONS")
+			w.WriteHeader(http.StatusNoContent)
+			return
+		case http.MethodGet:
+			mu.Lock()
+			it, ok := items[id]
+			mu.Unlock()
+			if !ok {
+				common.JSON(w, http.StatusNotFound, map[string]any{"error": "not found"})
+				return
+			}
+			common.JSON(w, 200, it)
+			return
+		case http.MethodPut:
+			b, _ := io.ReadAll(r.Body)
+			_ = r.Body.Close()
+			var in anyMap
+			_ = json.Unmarshal(b, &in)
+			if in == nil {
+				in = anyMap{}
+			}
+			in["id"] = id
+			mu.Lock()
+			items[id] = in
+			mu.Unlock()
+			common.JSON(w, 200, in)
+			return
+		case http.MethodPatch:
+			b, _ := io.ReadAll(r.Body)
+			_ = r.Body.Close()
+			var patch anyMap
+			_ = json.Unmarshal(b, &patch)
+			if patch == nil {
+				patch = anyMap{}
+			}
+			mu.Lock()
+			it, ok := items[id]
+			if !ok {
+				mu.Unlock()
+				common.JSON(w, http.StatusNotFound, map[string]any{"error": "not found"})
+				return
+			}
+			for k, v := range patch {
+				if k == "id" {
+					continue
+				}
+				it[k] = v
+			}
+			mu.Unlock()
+			common.JSON(w, 200, it)
+			return
+		case http.MethodDelete:
+			mu.Lock()
+			delete(items, id)
+			mu.Unlock()
+			w.WriteHeader(http.StatusNoContent)
+			return
+		default:
+			w.Header().Set("Allow", "GET,PUT,PATCH,DELETE,OPTIONS")
+			common.JSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
+			return
+		}
+	})
 }
 
 func userRoutes(mux *http.ServeMux, spec ServiceSpec) {
 	p := spec.InterceptPrefix
 	mux.HandleFunc(p+"/user/info", func(w http.ResponseWriter, r *http.Request) {
+		if v, err := common.LoadJSONDynamic(common.JoinAssets("user", "info.json")); err == nil {
+			common.JSON(w, 200, v)
+			return
+		}
 		common.JSON(w, 200, map[string]any{
 			"code": 0,
 			"data": map[string]any{
@@ -147,6 +317,10 @@ func userRoutes(mux *http.ServeMux, spec ServiceSpec) {
 		})
 	})
 	mux.HandleFunc(p+"/posts", func(w http.ResponseWriter, r *http.Request) {
+		if v, err := common.LoadJSONDynamic(common.JoinAssets("user", "posts.json")); err == nil {
+			common.JSON(w, 200, v)
+			return
+		}
 		posts := make([]map[string]any, 0, 5)
 		for i := 1; i <= 5; i++ {
 			posts = append(posts, map[string]any{
@@ -171,6 +345,10 @@ func orderRoutes(mux *http.ServeMux, spec ServiceSpec) {
 			common.JSON(w, 201, map[string]any{"code": 0, "data": in})
 			return
 		}
+		if v, err := common.LoadJSONDynamic(common.JoinAssets("order", "orders.json")); err == nil {
+			common.JSON(w, 200, v)
+			return
+		}
 		orders := []map[string]any{
 			{"id": 1001, "status": "CREATED"},
 			{"id": 1002, "status": "PAID"},
@@ -191,6 +369,10 @@ func paymentRoutes(mux *http.ServeMux, spec ServiceSpec) {
 	p := spec.InterceptPrefix
 	mux.HandleFunc(p+"/checkout", func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(150 * time.Millisecond)
+		if v, err := common.LoadJSONDynamic(common.JoinAssets("payment", "checkout.json")); err == nil {
+			common.JSON(w, 200, v)
+			return
+		}
 		common.JSON(w, 200, map[string]any{
 			"code": 0,
 			"data": map[string]any{

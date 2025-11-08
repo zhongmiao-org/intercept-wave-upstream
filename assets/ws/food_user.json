@@ -1,0 +1,9 @@
+[
+  {"type": "order_accepted",       "orderId": "123456", "riderId": "rider_888", "riderName": "张师傅", "riderPhone": "138****1234", "estimatedArrival": "19:30"},
+  {"type": "order_picked_up",      "orderId": "123456", "timestamp": 1621234567890},
+  {"type": "rider_location_update", "orderId": "123456", "location": {"lat": 39.9042, "lng": 116.4074}},
+  {"type": "rider_location_update", "orderId": "123456", "location": {"lat": 39.9050, "lng": 116.4080}},
+  {"type": "order_delivered",      "orderId": "123456", "timestamp": 1621234667890},
+  {"type": "order_cancelled",      "orderId": "123456", "reason": "用户取消"}
+]
+

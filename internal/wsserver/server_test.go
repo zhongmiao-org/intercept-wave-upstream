@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"testing"
 	"time"
 
@@ -51,7 +52,9 @@ func TestWsEcho(t *testing.T) {
 	time.Sleep(150 * time.Millisecond)
 
 	u := fmt.Sprintf("ws://127.0.0.1:%d/ws/echo", base+3)
-	c, _, err := websocket.DefaultDialer.Dial(u, nil)
+	hdr := http.Header{}
+	hdr.Set("X-Auth-Token", staticWsToken)
+	c, _, err := websocket.DefaultDialer.Dial(u, hdr)
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}

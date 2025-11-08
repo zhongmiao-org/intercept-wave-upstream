@@ -1,0 +1,36 @@
+{
+  "code": 0,
+  "data": [
+    {
+      "id": 101,
+      "title": "Hello World",
+      "category": "intro",
+      "tags": ["hello", "start"],
+      "author": {"id": 1, "name": "张三"},
+      "createdAt": "2024-05-10T09:00:00Z",
+      "stats": {"views": 1234, "likes": 45, "comments": 3},
+      "published": true
+    },
+    {
+      "id": 102,
+      "title": "Gopher Tips",
+      "category": "tech",
+      "tags": ["go", "tips"],
+      "author": {"id": 2, "name": "李四"},
+      "createdAt": "2024-05-11T16:20:00Z",
+      "stats": {"views": 560, "likes": 12, "comments": 0},
+      "published": false
+    },
+    {
+      "id": 103,
+      "title": "旅行分享",
+      "category": "life",
+      "tags": ["travel", "photo"],
+      "author": {"id": 3, "name": "王五"},
+      "createdAt": "2024-05-12T12:00:00Z",
+      "stats": {"views": 78, "likes": 6, "comments": 1},
+      "published": true
+    }
+  ]
+}
+

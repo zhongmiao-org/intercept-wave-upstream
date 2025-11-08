@@ -1,0 +1,6 @@
+[
+  {"id": 1, "name": "Alpha",   "type": "service", "enabled": true,  "labels": ["blue", "core"],     "weight": 10},
+  {"id": 2, "name": "Bravo",   "type": "module",  "enabled": false, "labels": ["beta"],           "weight": 7},
+  {"id": 3, "name": "Charlie", "type": "job",     "enabled": true,  "labels": ["cron", "night"], "weight": 3}
+]
+

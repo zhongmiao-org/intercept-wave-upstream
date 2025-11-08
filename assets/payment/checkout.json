@@ -1,0 +1,13 @@
+{
+  "code": 0,
+  "data": {
+    "paid": true,
+    "amount": 299,
+    "currency": "CNY",
+    "method": "alipay",
+    "txnId": "TXN-20240512-XYZ",
+    "meta": {"promo": "MAY-DISCOUNT", "rate": 0.88}
+  },
+  "message": "paid"
+}
+

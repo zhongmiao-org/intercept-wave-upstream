@@ -1,0 +1,17 @@
+{
+  "code": 0,
+  "data": {
+    "id": 1,
+    "name": "张三",
+    "email": "zhangsan@example.com",
+    "roles": ["admin", "editor"],
+    "profile": {
+      "nickname": "Z3",
+      "age": 29,
+      "tags": ["pro", "beta"],
+      "joinedAt": "2023-08-01T12:34:56Z"
+    }
+  },
+  "message": "success"
+}
+
