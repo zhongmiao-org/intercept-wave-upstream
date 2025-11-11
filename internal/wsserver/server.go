@@ -85,7 +85,8 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 			if err != nil {
 				break
 			}
-			if err := c.WriteMessage(t, msg); err != nil {
+			logWsFrame(sp, "recv", t, msg)
+			if err := writeMessageLogged(c, sp, t, msg); err != nil {
 				log.Printf("write echo: %v", err)
 				return
 			}
@@ -114,7 +115,7 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 			select {
 			case <-ticker.C:
 				i++
-				if err := c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("tick %d", i))); err != nil {
+				if err := writeMessageLogged(c, sp, websocket.TextMessage, []byte(fmt.Sprintf("tick %d", i))); err != nil {
 					log.Printf("write ticker: %v", err)
 					return
 				}
@@ -122,7 +123,9 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 				if err := c.SetReadDeadline(time.Now().Add(10 * time.Millisecond)); err != nil {
 					log.Printf("set read deadline: %v", err)
 				}
-				if _, _, err := c.ReadMessage(); err != nil {
+				if t, msg, err := c.ReadMessage(); err == nil {
+					logWsFrame(sp, "recv", t, msg)
+				} else {
 					// continue until client closes; ignore read timeouts
 				}
 			}
@@ -155,13 +158,18 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 			}
 		}
 		for _, m := range msgs {
-			if err := c.WriteMessage(websocket.TextMessage, []byte(m)); err != nil {
+			if err := writeMessageLogged(c, sp, websocket.TextMessage, []byte(m)); err != nil {
 				log.Printf("write timeline: %v", err)
 				break
 			}
 			time.Sleep(300 * time.Millisecond)
+			// opportunistically log any inbound frames without blocking timeline
+			_ = c.SetReadDeadline(time.Now().Add(10 * time.Millisecond))
+			if t, msg, err := c.ReadMessage(); err == nil {
+				logWsFrame(sp, "recv", t, msg)
+			}
 		}
-		if err := c.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"), time.Now().Add(time.Second)); err != nil {
+		if err := writeControlLogged(c, sp, websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"), time.Now().Add(time.Second)); err != nil {
 			log.Printf("write close ctrl: %v", err)
 		}
 	})
@@ -183,13 +191,17 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 		delay := parseInterval(r, 300)
 		seq := loadFoodFlow("food_user.json", defaultFoodUserFlow(), key)
 		for _, m := range seq {
-			if err := writeJSON(c, m); err != nil {
+			if err := writeJSONWithLog(c, sp, m); err != nil {
 				log.Printf("food user write: %v", err)
 				break
 			}
 			time.Sleep(time.Duration(delay) * time.Millisecond)
+			_ = c.SetReadDeadline(time.Now().Add(10 * time.Millisecond))
+			if t, msg, err := c.ReadMessage(); err == nil {
+				logWsFrame(sp, "recv", t, msg)
+			}
 		}
-		_ = c.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"), time.Now().Add(time.Second))
+		_ = writeControlLogged(c, sp, websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"), time.Now().Add(time.Second))
 	})
 
 	mux.HandleFunc("/ws/food/merchant", func(w http.ResponseWriter, r *http.Request) {
@@ -206,13 +218,17 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 		delay := parseInterval(r, 450)
 		seq := loadFoodFlow("food_merchant.json", defaultFoodMerchantFlow(), key)
 		for _, m := range seq {
-			if err := writeJSON(c, m); err != nil {
+			if err := writeJSONWithLog(c, sp, m); err != nil {
 				log.Printf("food merchant write: %v", err)
 				break
 			}
 			time.Sleep(time.Duration(delay) * time.Millisecond)
+			_ = c.SetReadDeadline(time.Now().Add(10 * time.Millisecond))
+			if t, msg, err := c.ReadMessage(); err == nil {
+				logWsFrame(sp, "recv", t, msg)
+			}
 		}
-		_ = c.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"), time.Now().Add(time.Second))
+		_ = writeControlLogged(c, sp, websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"), time.Now().Add(time.Second))
 	})
 }
 
@@ -241,13 +257,62 @@ func parseInterval(r *http.Request, def int) int {
 }
 
 // writeJSON serializes a map to JSON text message
-func writeJSON(c *websocket.Conn, m map[string]any) error {
+func writeJSONWithLog(c *websocket.Conn, sp WsSpec, m map[string]any) error {
 	// use common.jsonMarshal for consistency
 	b, err := common.JsonMarshalCompat(m)
 	if err != nil {
 		return err
 	}
-	return c.WriteMessage(websocket.TextMessage, b)
+	return writeMessageLogged(c, sp, websocket.TextMessage, b)
+}
+
+// writeMessageLogged writes a WS frame and logs the payload direction/type.
+func writeMessageLogged(c *websocket.Conn, sp WsSpec, t int, payload []byte) error {
+	logWsFrame(sp, "send", t, payload)
+	return c.WriteMessage(t, payload)
+}
+
+// writeControlLogged writes a control frame (e.g., close) and logs it.
+func writeControlLogged(c *websocket.Conn, sp WsSpec, t int, payload []byte, deadline time.Time) error {
+	logWsFrame(sp, "send", t, payload)
+	return c.WriteControl(t, payload, deadline)
+}
+
+// logWsFrame prints a concise representation of a WS frame.
+func logWsFrame(sp WsSpec, dir string, t int, payload []byte) {
+	tp := wsTypeName(t)
+	msg := summarizePayload(t, payload)
+	common.Logf("WS %s %s [%s]: %s", sp.Name, dir, tp, msg)
+}
+
+func wsTypeName(t int) string {
+	switch t {
+	case websocket.TextMessage:
+		return "text"
+	case websocket.BinaryMessage:
+		return "binary"
+	case websocket.CloseMessage:
+		return "close"
+	case websocket.PingMessage:
+		return "ping"
+	case websocket.PongMessage:
+		return "pong"
+	default:
+		return fmt.Sprintf("type_%d", t)
+	}
+}
+
+func summarizePayload(t int, b []byte) string {
+	if t == websocket.TextMessage || t == websocket.PingMessage || t == websocket.PongMessage || t == websocket.CloseMessage {
+		const limit = 200
+		s := string(b)
+		if len(s) > limit {
+			return fmt.Sprintf("%q...(truncated %d bytes)", s[:limit], len(s)-limit)
+		}
+		return fmt.Sprintf("%q", s)
+	}
+	// binary: don't print raw bytes to keep logs readable
+	return fmt.Sprintf("%d bytes", len(b))
 }
 
 // default flows (user/merchant)
