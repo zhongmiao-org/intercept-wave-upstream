@@ -103,6 +103,20 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 			return
 		}
 		defer func() { _ = c.Close() }()
+		// start background reader to log any inbound messages; signals done on error/close
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			for {
+				t, msg, err := c.ReadMessage()
+				if err != nil {
+					// connection closed or fatal read; stop
+					common.Logf("WS %s recv loop end: %v", sp.Name, err)
+					return
+				}
+				logWsFrame(sp, "recv", t, msg)
+			}
+		}()
 		ivalStr := r.URL.Query().Get("interval")
 		ival, _ := strconv.Atoi(ivalStr)
 		if ival <= 0 {
@@ -119,15 +133,9 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 					log.Printf("write ticker: %v", err)
 					return
 				}
-			default:
-				if err := c.SetReadDeadline(time.Now().Add(10 * time.Millisecond)); err != nil {
-					log.Printf("set read deadline: %v", err)
-				}
-				if t, msg, err := c.ReadMessage(); err == nil {
-					logWsFrame(sp, "recv", t, msg)
-				} else {
-					// continue until client closes; ignore read timeouts
-				}
+			case <-done:
+				// client closed or read failed; stop sending
+				return
 			}
 		}
 	})
@@ -157,16 +165,31 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 				}
 			}
 		}
+		// background reader: log and stop sequence when client closes
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			for {
+				t, msg, err := c.ReadMessage()
+				if err != nil {
+					common.Logf("WS %s recv loop end: %v", sp.Name, err)
+					return
+				}
+				logWsFrame(sp, "recv", t, msg)
+			}
+		}()
+	timelineLoop:
 		for _, m := range msgs {
 			if err := writeMessageLogged(c, sp, websocket.TextMessage, []byte(m)); err != nil {
 				log.Printf("write timeline: %v", err)
 				break
 			}
 			time.Sleep(300 * time.Millisecond)
-			// opportunistically log any inbound frames without blocking timeline
-			_ = c.SetReadDeadline(time.Now().Add(10 * time.Millisecond))
-			if t, msg, err := c.ReadMessage(); err == nil {
-				logWsFrame(sp, "recv", t, msg)
+			select {
+			case <-done:
+				// stop sequence when read loop ends
+				break timelineLoop
+			default:
 			}
 		}
 		if err := writeControlLogged(c, sp, websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"), time.Now().Add(time.Second)); err != nil {
@@ -187,18 +210,33 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 			return
 		}
 		defer func() { _ = c.Close() }()
+		// background reader to log inbound
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			for {
+				t, msg, err := c.ReadMessage()
+				if err != nil {
+					common.Logf("WS %s recv loop end: %v", sp.Name, err)
+					return
+				}
+				logWsFrame(sp, "recv", t, msg)
+			}
+		}()
 		key := eventKeyForService(sp)
 		delay := parseInterval(r, 300)
 		seq := loadFoodFlow("food_user.json", defaultFoodUserFlow(), key)
+	userLoop:
 		for _, m := range seq {
 			if err := writeJSONWithLog(c, sp, m); err != nil {
 				log.Printf("food user write: %v", err)
 				break
 			}
 			time.Sleep(time.Duration(delay) * time.Millisecond)
-			_ = c.SetReadDeadline(time.Now().Add(10 * time.Millisecond))
-			if t, msg, err := c.ReadMessage(); err == nil {
-				logWsFrame(sp, "recv", t, msg)
+			select {
+			case <-done:
+				break userLoop
+			default:
 			}
 		}
 		_ = writeControlLogged(c, sp, websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"), time.Now().Add(time.Second))
@@ -214,18 +252,33 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 			return
 		}
 		defer func() { _ = c.Close() }()
+		// background reader to log inbound
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			for {
+				t, msg, err := c.ReadMessage()
+				if err != nil {
+					common.Logf("WS %s recv loop end: %v", sp.Name, err)
+					return
+				}
+				logWsFrame(sp, "recv", t, msg)
+			}
+		}()
 		key := eventKeyForService(sp)
 		delay := parseInterval(r, 450)
 		seq := loadFoodFlow("food_merchant.json", defaultFoodMerchantFlow(), key)
+	merchantLoop:
 		for _, m := range seq {
 			if err := writeJSONWithLog(c, sp, m); err != nil {
 				log.Printf("food merchant write: %v", err)
 				break
 			}
 			time.Sleep(time.Duration(delay) * time.Millisecond)
-			_ = c.SetReadDeadline(time.Now().Add(10 * time.Millisecond))
-			if t, msg, err := c.ReadMessage(); err == nil {
-				logWsFrame(sp, "recv", t, msg)
+			select {
+			case <-done:
+				break merchantLoop
+			default:
 			}
 		}
 		_ = writeControlLogged(c, sp, websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"), time.Now().Add(time.Second))
