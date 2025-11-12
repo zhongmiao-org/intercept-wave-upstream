@@ -6,6 +6,11 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 
 ## [Unreleased]
 
+- No changes yet.
+
+## [0.2.0] - 2025-11-12
+
+
 ### Added
 - WS: food-delivery simulation endpoints on all WS services
   - `ws://.../ws/food/user` and `ws://.../ws/food/merchant`
@@ -26,6 +31,7 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 
 ### Fixed
 - Docs: normalize JSON examples in `docs/接口清单.md` to valid JSON (arrays/objects) and remove ambiguous placeholders
+
 
 ## [0.1.1] - 2025-11-06
 
