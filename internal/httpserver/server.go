@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand/v2"
+	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -54,17 +54,17 @@ func StartAll(base int) []*http.Server {
 
 func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 	// Simple in-memory store for REST demo endpoints (per-service instance)
-	type anyMap = map[string]any
+	type anyMap = map[string]interface{}
 	items := map[int]anyMap{}
 	nextID := 1
 	var mu sync.Mutex
 
 	// Seed REST items from assets if present
 	if arr, err := common.LoadJSONDynamic(common.JoinAssets("rest", "items.json")); err == nil {
-		if list, ok := arr.([]any); ok {
+		if list, ok := arr.([]interface{}); ok {
 			mu.Lock()
 			for _, it := range list {
-				if m, ok := it.(map[string]any); ok {
+				if m, ok := it.(map[string]interface{}); ok {
 					// coerce id
 					id := 0
 					if v, ok := m["id"]; ok {
@@ -102,7 +102,7 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 	}
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		common.JSON(w, 200, map[string]any{
+		common.JSON(w, 200, map[string]interface{}{
 			"service":         spec.Name,
 			"port":            spec.Port,
 			"interceptPrefix": spec.InterceptPrefix,
@@ -120,7 +120,7 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 		if code < 100 || code > 599 {
 			code = 400
 		}
-		common.JSON(w, code, map[string]any{"status": code})
+		common.JSON(w, code, map[string]interface{}{"status": code})
 	})
 
 	mux.HandleFunc("/delay/", func(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +130,7 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 			ms = 0
 		}
 		time.Sleep(time.Duration(ms) * time.Millisecond)
-		common.JSON(w, 200, map[string]any{"delayedMs": ms})
+		common.JSON(w, 200, map[string]interface{}{"delayedMs": ms})
 	})
 
 	mux.HandleFunc("/headers", func(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +141,7 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 				m[k] = v
 			}
 		}
-		common.JSON(w, 200, map[string]any{"headers": m})
+		common.JSON(w, 200, map[string]interface{}{"headers": m})
 	})
 
 	mux.HandleFunc("/cookies", func(w http.ResponseWriter, r *http.Request) {
@@ -149,7 +149,7 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 		for _, c := range r.Cookies() {
 			cs[c.Name] = c.Value
 		}
-		common.JSON(w, 200, map[string]any{"cookies": cs})
+		common.JSON(w, 200, map[string]interface{}{"cookies": cs})
 	})
 
 	mux.HandleFunc("/large", func(w http.ResponseWriter, r *http.Request) {
@@ -165,13 +165,13 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 		for i := range buf {
 			buf[i] = byte('a' + (i % 26))
 		}
-		common.JSON(w, 200, map[string]any{"size": sz, "data": string(buf)})
+		common.JSON(w, 200, map[string]interface{}{"size": sz, "data": string(buf)})
 	})
 
 	mux.HandleFunc("/echo", func(w http.ResponseWriter, r *http.Request) {
 		b, _ := io.ReadAll(r.Body)
 		_ = r.Body.Close()
-		common.JSON(w, 200, map[string]any{
+		common.JSON(w, 200, map[string]interface{}{
 			"method": r.Method,
 			"path":   r.URL.Path,
 			"query":  r.URL.RawQuery,
@@ -199,7 +199,7 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 				list = append(list, m)
 			}
 			mu.Unlock()
-			common.JSON(w, 200, map[string]any{"items": list})
+			common.JSON(w, 200, map[string]interface{}{"items": list})
 			return
 		case http.MethodPost:
 			b, _ := io.ReadAll(r.Body)
@@ -220,7 +220,7 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 			return
 		default:
 			w.Header().Set("Allow", "GET,POST,OPTIONS")
-			common.JSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
+			common.JSON(w, http.StatusMethodNotAllowed, map[string]interface{}{"error": "method not allowed"})
 			return
 		}
 	})
@@ -229,7 +229,7 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 		idStr := strings.TrimPrefix(r.URL.Path, "/rest/items/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil || id <= 0 {
-			common.JSON(w, http.StatusBadRequest, map[string]any{"error": "invalid id"})
+			common.JSON(w, http.StatusBadRequest, map[string]interface{}{"error": "invalid id"})
 			return
 		}
 		switch r.Method {
@@ -242,7 +242,7 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 			it, ok := items[id]
 			mu.Unlock()
 			if !ok {
-				common.JSON(w, http.StatusNotFound, map[string]any{"error": "not found"})
+				common.JSON(w, http.StatusNotFound, map[string]interface{}{"error": "not found"})
 				return
 			}
 			common.JSON(w, 200, it)
@@ -273,7 +273,7 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 			it, ok := items[id]
 			if !ok {
 				mu.Unlock()
-				common.JSON(w, http.StatusNotFound, map[string]any{"error": "not found"})
+				common.JSON(w, http.StatusNotFound, map[string]interface{}{"error": "not found"})
 				return
 			}
 			for k, v := range patch {
@@ -293,72 +293,203 @@ func attachCommon(mux *http.ServeMux, spec ServiceSpec) {
 			return
 		default:
 			w.Header().Set("Allow", "GET,PUT,PATCH,DELETE,OPTIONS")
-			common.JSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
+			common.JSON(w, http.StatusMethodNotAllowed, map[string]interface{}{"error": "method not allowed"})
 			return
 		}
 	})
 }
 
+func registerPaths(mux *http.ServeMux, paths []string, handler http.HandlerFunc) {
+	for _, path := range paths {
+		mux.HandleFunc(path, handler)
+	}
+}
+
+func assetPayloadOrFallback(parts []string, fallback interface{}) interface{} {
+	if v, err := common.LoadJSONDynamic(common.JoinAssets(parts...)); err == nil {
+		return v
+	}
+	return fallback
+}
+
 func userRoutes(mux *http.ServeMux, spec ServiceSpec) {
 	p := spec.InterceptPrefix
-	mux.HandleFunc(p+"/user/info", func(w http.ResponseWriter, r *http.Request) {
-		if v, err := common.LoadJSONDynamic(common.JoinAssets("user", "info.json")); err == nil {
-			common.JSON(w, 200, v)
-			return
-		}
-		common.JSON(w, 200, map[string]any{
+	registerPaths(mux, []string{p + "/user/info", "/user/info"}, func(w http.ResponseWriter, r *http.Request) {
+		common.JSON(w, 200, assetPayloadOrFallback([]string{"user", "info.json"}, map[string]interface{}{
 			"code": 0,
-			"data": map[string]any{
+			"data": map[string]interface{}{
 				"id":    1,
 				"name":  "张三",
 				"email": "zhangsan@example.com",
 			},
 			"message": "success",
-		})
+		}))
 	})
-	mux.HandleFunc(p+"/posts", func(w http.ResponseWriter, r *http.Request) {
-		if v, err := common.LoadJSONDynamic(common.JoinAssets("user", "posts.json")); err == nil {
-			common.JSON(w, 200, v)
-			return
-		}
-		posts := make([]map[string]any, 0, 5)
+	registerPaths(mux, []string{p + "/posts", "/posts"}, func(w http.ResponseWriter, r *http.Request) {
+		posts := make([]map[string]interface{}, 0, 5)
 		for i := 1; i <= 5; i++ {
-			posts = append(posts, map[string]any{
+			posts = append(posts, map[string]interface{}{
 				"id":        i,
 				"title":     fmt.Sprintf("Post %d", i),
 				"createdAt": time.Now().Add(-time.Duration(i) * time.Hour).Format(time.RFC3339),
 			})
 		}
-		common.JSON(w, 200, map[string]any{"code": 0, "data": posts})
+		common.JSON(w, 200, assetPayloadOrFallback([]string{"user", "posts.json"}, map[string]interface{}{"code": 0, "data": posts}))
+	})
+	registerPaths(mux, []string{p + "/users", "/users"}, func(w http.ResponseWriter, r *http.Request) {
+		common.JSON(w, 200, assetPayloadOrFallback([]string{"user", "users.json"}, map[string]interface{}{
+			"code": 0,
+			"data": []map[string]interface{}{
+				{"id": 1, "name": "张三", "status": "active"},
+				{"id": 2, "name": "李四", "status": "inactive"},
+			},
+			"meta": map[string]interface{}{"total": 2},
+		}))
+	})
+	registerPaths(mux, []string{p + "/admin/stats", "/admin/stats"}, func(w http.ResponseWriter, r *http.Request) {
+		common.JSON(w, 200, assetPayloadOrFallback([]string{"user", "admin_stats.json"}, map[string]interface{}{
+			"code": 0,
+			"data": map[string]interface{}{
+				"activeUsers":   128,
+				"newUsersToday": 7,
+			},
+		}))
+	})
+	registerPaths(mux, []string{p + "/users/", "/users/"}, func(w http.ResponseWriter, r *http.Request) {
+		userID := strings.TrimPrefix(r.URL.Path, p+"/users/")
+		if strings.HasPrefix(r.URL.Path, "/users/") {
+			userID = strings.TrimPrefix(r.URL.Path, "/users/")
+		}
+		if !strings.HasSuffix(userID, "/preferences") {
+			http.NotFound(w, r)
+			return
+		}
+		userID = strings.TrimSuffix(userID, "/preferences")
+		if userID == "" || strings.Contains(userID, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		payload := assetPayloadOrFallback([]string{"user", "preferences.json"}, map[string]interface{}{
+			"code": 0,
+			"data": map[string]interface{}{
+				"theme":    "light",
+				"language": "zh-CN",
+				"notifications": map[string]bool{
+					"email": true,
+					"sms":   false,
+				},
+			},
+		})
+		body, ok := payload.(map[string]interface{})
+		if !ok {
+			common.JSON(w, 200, payload)
+			return
+		}
+		data, ok := body["data"].(map[string]interface{})
+		if !ok {
+			common.JSON(w, 200, payload)
+			return
+		}
+		cp := map[string]interface{}{}
+		for k, v := range body {
+			cp[k] = v
+		}
+		dataCopy := map[string]interface{}{}
+		for k, v := range data {
+			dataCopy[k] = v
+		}
+		dataCopy["userId"] = userID
+		cp["data"] = dataCopy
+		common.JSON(w, 200, cp)
 	})
 }
 
 func orderRoutes(mux *http.ServeMux, spec ServiceSpec) {
 	p := spec.InterceptPrefix
-	mux.HandleFunc(p+"/orders", func(w http.ResponseWriter, r *http.Request) {
+	registerPaths(mux, []string{p + "/orders", "/orders"}, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			b, _ := io.ReadAll(r.Body)
 			_ = r.Body.Close()
-			var in map[string]any
+			var in map[string]interface{}
 			_ = json.Unmarshal(b, &in)
-			in["id"] = rand.IntN(100000)
-			common.JSON(w, 201, map[string]any{"code": 0, "data": in})
+			in["id"] = rand.Intn(100000)
+			common.JSON(w, 201, map[string]interface{}{"code": 0, "data": in})
 			return
 		}
-		if v, err := common.LoadJSONDynamic(common.JoinAssets("order", "orders.json")); err == nil {
-			common.JSON(w, 200, v)
-			return
-		}
-		orders := []map[string]any{
+		orders := []map[string]interface{}{
 			{"id": 1001, "status": "CREATED"},
 			{"id": 1002, "status": "PAID"},
 		}
-		common.JSON(w, 200, map[string]any{"code": 0, "data": orders})
+		common.JSON(w, 200, assetPayloadOrFallback([]string{"order", "orders.json"}, map[string]interface{}{"code": 0, "data": orders}))
+	})
+	registerPaths(mux, []string{p + "/orders/", "/orders/"}, func(w http.ResponseWriter, r *http.Request) {
+		orderID := strings.TrimPrefix(r.URL.Path, p+"/orders/")
+		if strings.HasPrefix(r.URL.Path, "/orders/") {
+			orderID = strings.TrimPrefix(r.URL.Path, "/orders/")
+		}
+		if orderID == "" || strings.Contains(orderID, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		payload := assetPayloadOrFallback([]string{"order", "detail.json"}, map[string]interface{}{
+			"code": 0,
+			"data": map[string]interface{}{
+				"id":       orderID,
+				"status":   "PROCESSING",
+				"currency": "CNY",
+				"amount":   88.5,
+				"items": []map[string]interface{}{
+					{"sku": "SKU-" + orderID, "qty": 1, "price": 88.5},
+				},
+			},
+		})
+		body, ok := payload.(map[string]interface{})
+		if !ok {
+			common.JSON(w, 200, payload)
+			return
+		}
+		data, ok := body["data"].(map[string]interface{})
+		if !ok {
+			common.JSON(w, 200, payload)
+			return
+		}
+		cp := map[string]interface{}{}
+		for k, v := range body {
+			cp[k] = v
+		}
+		dataCopy := map[string]interface{}{}
+		for k, v := range data {
+			dataCopy[k] = v
+		}
+		dataCopy["id"] = orderID
+		if items, ok := dataCopy["items"].([]interface{}); ok && len(items) > 0 {
+			if first, ok := items[0].(map[string]interface{}); ok {
+				firstCopy := map[string]interface{}{}
+				for k, v := range first {
+					firstCopy[k] = v
+				}
+				firstCopy["sku"] = "SKU-" + orderID
+				items[0] = firstCopy
+				dataCopy["items"] = items
+			}
+		}
+		cp["data"] = dataCopy
+		common.JSON(w, 200, cp)
+	})
+	registerPaths(mux, []string{p + "/admin/orders/summary", "/admin/orders/summary"}, func(w http.ResponseWriter, r *http.Request) {
+		common.JSON(w, 200, assetPayloadOrFallback([]string{"order", "admin_summary.json"}, map[string]interface{}{
+			"code": 0,
+			"data": map[string]interface{}{
+				"created":   12,
+				"paid":      9,
+				"cancelled": 3,
+			},
+		}))
 	})
 	// emulate wildcard: /order/{id}/submit
-	mux.HandleFunc(p+"/order/", func(w http.ResponseWriter, r *http.Request) {
+	registerPaths(mux, []string{p + "/order/", "/order/"}, func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/submit") {
-			common.JSON(w, 200, map[string]any{"message": "submit ok"})
+			common.JSON(w, 200, assetPayloadOrFallback([]string{"order", "submit.json"}, map[string]interface{}{"message": "submit ok"}))
 			return
 		}
 		http.NotFound(w, r)
@@ -367,21 +498,82 @@ func orderRoutes(mux *http.ServeMux, spec ServiceSpec) {
 
 func paymentRoutes(mux *http.ServeMux, spec ServiceSpec) {
 	p := spec.InterceptPrefix
-	mux.HandleFunc(p+"/checkout", func(w http.ResponseWriter, r *http.Request) {
+	registerPaths(mux, []string{p + "/checkout", "/checkout"}, func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(150 * time.Millisecond)
-		if v, err := common.LoadJSONDynamic(common.JoinAssets("payment", "checkout.json")); err == nil {
-			common.JSON(w, 200, v)
-			return
-		}
-		common.JSON(w, 200, map[string]any{
+		common.JSON(w, 200, assetPayloadOrFallback([]string{"payment", "checkout.json"}, map[string]interface{}{
 			"code": 0,
-			"data": map[string]any{
+			"data": map[string]interface{}{
 				"paid":     true,
 				"amount":   199,
 				"currency": "CNY",
 			},
 			"message": "paid",
+		}))
+	})
+	registerPaths(mux, []string{p + "/checkout/preview", "/checkout/preview"}, func(w http.ResponseWriter, r *http.Request) {
+		common.JSON(w, 200, assetPayloadOrFallback([]string{"payment", "preview.json"}, map[string]interface{}{
+			"code": 0,
+			"data": map[string]interface{}{
+				"amount":        299,
+				"currency":      "CNY",
+				"estimatedFees": 4.2,
+			},
+			"message": "preview",
+		}))
+	})
+	registerPaths(mux, []string{p + "/refunds", "/refunds"}, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			b, _ := io.ReadAll(r.Body)
+			_ = r.Body.Close()
+			var in map[string]interface{}
+			_ = json.Unmarshal(b, &in)
+			if in == nil {
+				in = map[string]interface{}{}
+			}
+			in["refundId"] = fmt.Sprintf("RF-%05d", rand.Intn(100000))
+			common.JSON(w, http.StatusCreated, map[string]interface{}{"code": 0, "data": in, "message": "refund accepted"})
+			return
+		}
+		common.JSON(w, 200, assetPayloadOrFallback([]string{"payment", "refunds.json"}, map[string]interface{}{
+			"code": 0,
+			"data": []map[string]interface{}{
+				{"refundId": "RF-00001", "status": "SUCCESS"},
+			},
+		}))
+	})
+	registerPaths(mux, []string{p + "/callbacks/alipay", "/callbacks/alipay"}, func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		_ = r.Body.Close()
+		payload := assetPayloadOrFallback([]string{"payment", "callback_alipay.json"}, map[string]interface{}{
+			"code": 0,
+			"data": map[string]interface{}{
+				"provider":     "alipay",
+				"callbackBody": string(b),
+				"verified":     true,
+			},
+			"message": "callback received",
 		})
+		body, ok := payload.(map[string]interface{})
+		if !ok {
+			common.JSON(w, 200, payload)
+			return
+		}
+		data, ok := body["data"].(map[string]interface{})
+		if !ok {
+			common.JSON(w, 200, payload)
+			return
+		}
+		cp := map[string]interface{}{}
+		for k, v := range body {
+			cp[k] = v
+		}
+		dataCopy := map[string]interface{}{}
+		for k, v := range data {
+			dataCopy[k] = v
+		}
+		dataCopy["callbackBody"] = string(b)
+		cp["data"] = dataCopy
+		common.JSON(w, 200, cp)
 	})
 }
 

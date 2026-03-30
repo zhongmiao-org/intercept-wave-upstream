@@ -1,0 +1,11 @@
+{
+  "code": 0,
+  "data": {
+    "provider": "alipay",
+    "verified": true,
+    "tradeStatus": "TRADE_SUCCESS",
+    "tradeNo": "202406010001",
+    "outTradeNo": "ORDER-2001"
+  },
+  "message": "callback received"
+}

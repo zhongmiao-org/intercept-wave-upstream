@@ -21,7 +21,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/zhongmiao-org/intercept-wave-upstream/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/v/release/zhongmiao-org/intercept-wave-upstream?sort=semver&display_name=tag&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&style=flat-square)](https://go.dev/)
+[![Go](https://img.shields.io/badge/Go-1.26%2B-00ADD8?logo=go&style=flat-square)](https://go.dev/)
 [![GHCR](https://img.shields.io/badge/GHCR-intercept--wave--upstream-2ea44f?logo=github&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/pkgs/container/intercept-wave-upstream)
 [![Platforms](https://img.shields.io/badge/Platforms-amd64%20%7C%20arm64-6aa84f?style=flat-square)](#)
 [![Code Style](https://img.shields.io/badge/code%20style-gofmt-FFD54F?style=flat-square)](#)
@@ -38,6 +38,7 @@
 - 3 个 HTTP 服务：端口 9000、9001、9002
 - 3 个 WebSocket 服务：端口 9003、9004、9005
 - 丰富的测试端点：状态码/延迟/回显/大包/路径前缀，以及 WS 的 echo/ticker/timeline
+- 额外提供适合多路由验证的别名接口：根路径 API、`/admin` 深层路径、详情页、提交动作、退款与支付回调
 
 ## 快速开始
 
@@ -77,6 +78,11 @@ go run ./...
 - 订单服务（9001，`interceptPrefix=/order-api`）：`GET /order-api/orders`、`POST /order-api/orders`、`GET /order-api/order/{id}/submit`
 - 支付服务（9002，`interceptPrefix=/pay-api`）：`POST /pay-api/checkout`
 
+适合 `stripPrefix=true` 的路由别名示例：
+- 9000 User：`GET /user/info`、`GET /users`、`GET /users/42/preferences`、`GET /admin/stats`
+- 9001 Order：`GET /orders`、`GET /orders/3009`、`GET /admin/orders/summary`、`GET /order/3009/submit`
+- 9002 Payment：`GET /checkout/preview`、`GET /refunds`、`POST /refunds`、`POST /callbacks/alipay`
+
 ## 示例 WebSocket 接口
 
 - Echo（9003）：`ws://localhost:9003/ws/echo`（回显文本/二进制帧）
@@ -89,6 +95,11 @@ go run ./...
 - User → `baseUrl=http://localhost:9000`，`interceptPrefix=/api`，`stripPrefix=true`
 - Order → `baseUrl=http://localhost:9001`，`interceptPrefix=/order-api`，`stripPrefix=true`
 - Payment → `baseUrl=http://localhost:9002`，`interceptPrefix=/pay-api`，`stripPrefix=true`
+
+多路由 HTTP 组示例：
+- `/` → `http://localhost:9000`
+- `/api` → `http://localhost:9001`，`stripPrefix=true`
+- `/api/admin` → `http://localhost:9002`，`stripPrefix=true`
 
 ## CI 与发布
 

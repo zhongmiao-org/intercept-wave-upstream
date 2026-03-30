@@ -32,7 +32,7 @@ func requireToken(w http.ResponseWriter, r *http.Request) bool {
 		tok = r.URL.Query().Get("token")
 	}
 	if tok != staticWsToken {
-		common.JSON(w, http.StatusUnauthorized, map[string]any{
+		common.JSON(w, http.StatusUnauthorized, map[string]interface{}{
 			"error": "unauthorized",
 			"hint":  "provide X-Auth-Token header or ?token=",
 		})
@@ -67,7 +67,7 @@ func StartAll(base int) []*http.Server {
 
 func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		common.JSON(w, 200, map[string]any{"service": sp.Name, "port": sp.Port})
+		common.JSON(w, 200, map[string]interface{}{"service": sp.Name, "port": sp.Port})
 	})
 
 	mux.HandleFunc("/ws/echo", func(w http.ResponseWriter, r *http.Request) {
@@ -153,7 +153,7 @@ func attachRoutes(mux *http.ServeMux, sp WsSpec) {
 		// Load timeline messages from assets if present
 		msgs := []string{"hello", "processing", "done"}
 		if v, err := common.LoadJSONDynamic(common.JoinAssets("ws", "timeline.json")); err == nil {
-			if arr, ok := v.([]any); ok && len(arr) > 0 {
+			if arr, ok := v.([]interface{}); ok && len(arr) > 0 {
 				tmp := make([]string, 0, len(arr))
 				for _, it := range arr {
 					if s, ok := it.(string); ok {
@@ -310,7 +310,7 @@ func parseInterval(r *http.Request, def int) int {
 }
 
 // writeJSON serializes a map to JSON text message
-func writeJSONWithLog(c *websocket.Conn, sp WsSpec, m map[string]any) error {
+func writeJSONWithLog(c *websocket.Conn, sp WsSpec, m map[string]interface{}) error {
 	// use common.jsonMarshal for consistency
 	b, err := common.JsonMarshalCompat(m)
 	if err != nil {
@@ -369,33 +369,33 @@ func summarizePayload(t int, b []byte) string {
 }
 
 // default flows (user/merchant)
-func defaultFoodUserFlow() []map[string]any {
-	return []map[string]any{
+func defaultFoodUserFlow() []map[string]interface{} {
+	return []map[string]interface{}{
 		{"type": "order_accepted", "orderId": "123456", "riderId": "rider_888", "riderName": "张师傅", "riderPhone": "138****1234", "estimatedArrival": "19:30"},
 		{"type": "order_picked_up", "orderId": "123456", "timestamp": 1621234567890},
-		{"type": "rider_location_update", "orderId": "123456", "location": map[string]any{"lat": 39.9042, "lng": 116.4074}},
-		{"type": "rider_location_update", "orderId": "123456", "location": map[string]any{"lat": 39.9050, "lng": 116.4080}},
+		{"type": "rider_location_update", "orderId": "123456", "location": map[string]interface{}{"lat": 39.9042, "lng": 116.4074}},
+		{"type": "rider_location_update", "orderId": "123456", "location": map[string]interface{}{"lat": 39.9050, "lng": 116.4080}},
 		{"type": "order_delivered", "orderId": "123456", "timestamp": 1621234667890},
 		{"type": "order_cancelled", "orderId": "123456", "reason": "用户取消"},
 	}
 }
 
-func defaultFoodMerchantFlow() []map[string]any {
-	return []map[string]any{
-		{"type": "new_order", "orderId": "123456", "items": []any{map[string]any{"name": "红烧牛肉面", "qty": 2}}, "userAddress": "XX路XX号", "userNote": "不要香菜"},
+func defaultFoodMerchantFlow() []map[string]interface{} {
+	return []map[string]interface{}{
+		{"type": "new_order", "orderId": "123456", "items": []interface{}{map[string]interface{}{"name": "红烧牛肉面", "qty": 2}}, "userAddress": "XX路XX号", "userNote": "不要香菜"},
 		{"type": "order_cancelled", "orderId": "123456", "reason": "商家拒单"},
 	}
 }
 
 // loadFoodFlow loads an array of objects from assets/ws/{file}; if missing, uses fallback.
 // Then ensures the key name matches the desired event key by renaming when needed.
-func loadFoodFlow(file string, fallback []map[string]any, key string) []map[string]any {
+func loadFoodFlow(file string, fallback []map[string]interface{}, key string) []map[string]interface{} {
 	path := common.JoinAssets("ws", file)
 	if v, err := common.LoadJSONDynamic(path); err == nil {
-		if arr, ok := v.([]any); ok {
-			out := make([]map[string]any, 0, len(arr))
+		if arr, ok := v.([]interface{}); ok {
+			out := make([]map[string]interface{}, 0, len(arr))
 			for _, it := range arr {
-				if m, ok := it.(map[string]any); ok {
+				if m, ok := it.(map[string]interface{}); ok {
 					out = append(out, normalizeEventKey(m, key))
 				}
 			}
@@ -405,7 +405,7 @@ func loadFoodFlow(file string, fallback []map[string]any, key string) []map[stri
 		}
 	}
 	// apply key normalization to fallback too
-	out := make([]map[string]any, 0, len(fallback))
+	out := make([]map[string]interface{}, 0, len(fallback))
 	for _, m := range fallback {
 		out = append(out, normalizeEventKey(m, key))
 	}
@@ -413,11 +413,11 @@ func loadFoodFlow(file string, fallback []map[string]any, key string) []map[stri
 }
 
 // normalizeEventKey renames known keys to the desired key when necessary.
-func normalizeEventKey(m map[string]any, key string) map[string]any {
+func normalizeEventKey(m map[string]interface{}, key string) map[string]interface{} {
 	if key == "type" {
 		return m
 	}
-	cp := map[string]any{}
+	cp := map[string]interface{}{}
 	for k, v := range m {
 		cp[k] = v
 	}

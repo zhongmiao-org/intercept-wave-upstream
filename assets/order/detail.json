@@ -1,0 +1,22 @@
+{
+  "code": 0,
+  "data": {
+    "id": "2001",
+    "status": "PROCESSING",
+    "currency": "CNY",
+    "amount": 88.5,
+    "customer": {
+      "id": 90001,
+      "name": "测试企业客户"
+    },
+    "items": [
+      {"sku": "SKU-2001-A", "name": "Keyboard", "qty": 1, "price": 59.9},
+      {"sku": "SKU-2001-B", "name": "Mouse", "qty": 1, "price": 28.6}
+    ],
+    "timeline": [
+      {"status": "CREATED", "at": "2024-06-01T10:00:00Z"},
+      {"status": "PAID", "at": "2024-06-01T10:03:00Z"},
+      {"status": "PROCESSING", "at": "2024-06-01T10:05:00Z"}
+    ]
+  }
+}

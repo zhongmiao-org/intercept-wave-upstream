@@ -1,0 +1,19 @@
+{
+  "code": 0,
+  "data": {
+    "activeUsers": 128,
+    "newUsersToday": 7,
+    "retention7d": 0.82,
+    "regions": [
+      {"name": "cn-north", "count": 66},
+      {"name": "cn-east", "count": 38},
+      {"name": "ap-south", "count": 24}
+    ],
+    "featureFlags": {
+      "multiRoute": true,
+      "grayRelease": true,
+      "mockReplay": false
+    }
+  },
+  "message": "success"
+}

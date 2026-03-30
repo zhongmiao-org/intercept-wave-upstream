@@ -20,7 +20,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/zhongmiao-org/intercept-wave-upstream/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/v/release/zhongmiao-org/intercept-wave-upstream?sort=semver&display_name=tag&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&style=flat-square)](https://go.dev/)
+[![Go](https://img.shields.io/badge/Go-1.26%2B-00ADD8?logo=go&style=flat-square)](https://go.dev/)
 [![GHCR](https://img.shields.io/badge/GHCR-intercept--wave--upstream-2ea44f?logo=github&style=flat-square)](https://github.com/zhongmiao-org/intercept-wave-upstream/pkgs/container/intercept-wave-upstream)
 [![Platforms](https://img.shields.io/badge/Platforms-amd64%20%7C%20arm64-6aa84f?style=flat-square)](#)
 [![Code Style](https://img.shields.io/badge/code%20style-gofmt-FFD54F?style=flat-square)](#)
@@ -38,6 +38,7 @@ Container image: `ghcr.io/zhongmiao-org/intercept-wave-upstream`
 - 3 HTTP services on ports 9000, 9001, 9002
 - 3 WebSocket services on ports 9003, 9004, 9005
 - Rich test endpoints to validate Intercept Wave features: prefix variations, method echo, headers/cookies, delay, status, large payloads, wildcard-like paths, and WebSocket echo/ticker/timeline.
+- Route-friendly alias APIs for multi-route verification: root-level paths, nested `/admin` paths, detail resources, submit actions, refunds, and payment callbacks.
 
 ## Run
 
@@ -75,6 +76,11 @@ Service-specific examples:
 - 9000 User: `GET /api/user/info`, `GET /api/posts`
 - 9001 Order: `GET /order-api/orders`, `POST /order-api/orders`
 - 9002 Payment: `POST /pay-api/checkout`
+
+Route-friendly alias examples for `stripPrefix=true` testing:
+- 9000 User: `GET /user/info`, `GET /users`, `GET /users/42/preferences`, `GET /admin/stats`
+- 9001 Order: `GET /orders`, `GET /orders/3009`, `GET /admin/orders/summary`, `GET /order/3009/submit`
+- 9002 Payment: `GET /checkout/preview`, `GET /refunds`, `POST /refunds`, `POST /callbacks/alipay`
 
 ## Example WebSocket APIs
 
@@ -155,6 +161,11 @@ Service-specific endpoints:
       ]
     }
     ```
+- GET /users/42/preferences
+  - Root alias for `stripPrefix=true` tests
+  - Response includes a dynamic `userId` derived from the request path
+- GET /admin/stats
+  - Useful for longest-prefix matching tests such as `/api/admin` over `/api`
 
 2) Order service (9001, interceptPrefix=/order-api)
 
@@ -180,6 +191,10 @@ Service-specific endpoints:
     ```
 - GET /order-api/order/123/submit
   - Response: `{"message":"submit ok"}`
+- GET /orders/3009
+  - Root alias for `stripPrefix=true` tests
+- GET /admin/orders/summary
+  - Useful for overlapping route-prefix tests
 
 3) Payment service (9002, interceptPrefix=/pay-api)
 
@@ -192,6 +207,12 @@ Service-specific endpoints:
       "message": "paid"
     }
     ```
+- GET /checkout/preview
+  - Returns fee estimation and discounts
+- GET /refunds
+  - Returns refund list
+- POST /callbacks/alipay
+  - Returns callback verification result and echoes the callback body
 
 ## WebSocket Endpoints and Examples
 
@@ -218,6 +239,8 @@ Service-specific endpoints:
   - Forwarding preserves headers/body/status
   - CORS behavior (plugin sets headers) and delays
   - Wildcard-like paths with `stripPrefix`
+  - Multi-route precedence such as `/api/admin` over `/api`
+  - Root fallback route `/` plus API sub-routes in the same HTTP group
 
 ## CI & Release
 

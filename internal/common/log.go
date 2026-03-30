@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func Logf(format string, args ...any) {
+func Logf(format string, args ...interface{}) {
 	log.Printf("[upstream] "+format, args...)
 }
 
@@ -50,7 +50,7 @@ func (rw *respWriter) Flush() {
 	}
 }
 
-func JSON(w http.ResponseWriter, status int, payload any) {
+func JSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	_, _ = fmt.Fprint(w, toJSON(payload))
@@ -58,7 +58,7 @@ func JSON(w http.ResponseWriter, status int, payload any) {
 
 // Text is removed as unused to keep build warnings clean.
 
-func toJSON(v any) string {
+func toJSON(v interface{}) string {
 	s, ok := v.(string)
 	if ok {
 		return s
@@ -71,7 +71,7 @@ func toJSON(v any) string {
 }
 
 // isolated for easy replacement if needed
-var jsonMarshal = func(v any) ([]byte, error) { return json.Marshal(v) }
+var jsonMarshal = func(v interface{}) ([]byte, error) { return json.Marshal(v) }
 
 // JsonMarshalCompat exposes jsonMarshal to other packages for convenience.
-func JsonMarshalCompat(v any) ([]byte, error) { return jsonMarshal(v) }
+func JsonMarshalCompat(v interface{}) ([]byte, error) { return jsonMarshal(v) }

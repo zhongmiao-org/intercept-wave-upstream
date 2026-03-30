@@ -1,0 +1,15 @@
+{
+  "code": 0,
+  "data": {
+    "theme": "light",
+    "language": "zh-CN",
+    "timezone": "Asia/Shanghai",
+    "shortcuts": ["ctrl+k", "ctrl+shift+p"],
+    "notifications": {
+      "email": true,
+      "sms": false,
+      "push": true
+    }
+  },
+  "message": "success"
+}

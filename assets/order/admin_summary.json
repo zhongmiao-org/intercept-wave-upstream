@@ -1,0 +1,14 @@
+{
+  "code": 0,
+  "data": {
+    "created": 12,
+    "paid": 9,
+    "cancelled": 3,
+    "avgAmount": 132.45,
+    "topSkus": [
+      {"sku": "A-1", "count": 12},
+      {"sku": "B-9", "count": 7},
+      {"sku": "C-3", "count": 5}
+    ]
+  }
+}
