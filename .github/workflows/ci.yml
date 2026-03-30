@@ -46,6 +46,7 @@ jobs:
 
   qodana:
     name: Qodana
+    if: ${{ vars.ENABLE_QODANA == 'true' && secrets.QODANA_TOKEN != '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -67,10 +68,20 @@ jobs:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
           QODANA_ENDPOINT: 'https://qodana.cloud'
 
+  qodana-skip:
+    name: Qodana Skipped
+    if: ${{ !(vars.ENABLE_QODANA == 'true' && secrets.QODANA_TOKEN != '') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain skip
+        run: |
+          echo "Qodana was skipped."
+          echo "Set repository variable ENABLE_QODANA=true and configure a valid QODANA_TOKEN to enable it."
+
   releaseDraft:
     name: Release draft
     if: github.event_name != 'pull_request'
-    needs: [ build, qodana ]
+    needs: [ build, qodana, qodana-skip ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
