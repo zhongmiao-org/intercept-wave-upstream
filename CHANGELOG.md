@@ -19,6 +19,8 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 ### Changed
 - Docs: expand README examples for multi-route setups, strip-prefix aliases, and `/` + `/api` + `/api/admin` verification flows
 - Asset loading: resolve `assets/` more robustly so package-level tests can reuse the same fixture set
+- CI: remove Qodana and replace it with `staticcheck`
+- CI: upgrade `actions/setup-go` to `v6` and align the workflow Go version to `1.26.1`
 
 ### Fixed
 - Tests: add HTTP coverage for route-friendly aliases, dynamic path payloads, and refund creation behavior

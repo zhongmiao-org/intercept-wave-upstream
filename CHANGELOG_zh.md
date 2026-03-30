@@ -17,6 +17,8 @@
 ### 变更
 - 文档：扩展 README，补充多路由配置、`stripPrefix` 别名接口，以及 `/` + `/api` + `/api/admin` 验证示例
 - 资源加载：增强 `assets/` 目录解析逻辑，保证包级测试也能复用同一套样例数据
+- CI：移除 Qodana，改用 `staticcheck`
+- CI：升级 `actions/setup-go` 到 `v6`，并将 workflow 的 Go 版本对齐到 `1.26.1`
 
 ### 修复
 - 测试：新增 HTTP 覆盖，验证路由别名、动态路径返回，以及退款创建行为
