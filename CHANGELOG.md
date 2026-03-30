@@ -6,6 +6,11 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 
 ## [Unreleased]
 
+- No changes yet.
+
+## [0.3.2] - 2026-03-30
+
+
 ### Added
 - HTTP: route-friendly alias APIs for multi-route forwarding verification
   - User service: `/user/info`, `/users`, `/users/{id}/preferences`, `/admin/stats`
@@ -24,6 +29,7 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 
 ### Fixed
 - Tests: add HTTP coverage for route-friendly aliases, dynamic path payloads, and refund creation behavior
+
 
 ## [0.2.0] - 2025-11-12
 
