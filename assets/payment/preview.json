@@ -1,0 +1,14 @@
+{
+  "code": 0,
+  "data": {
+    "amount": 299,
+    "currency": "CNY",
+    "estimatedFees": 4.2,
+    "discounts": [
+      {"type": "coupon", "amount": 20},
+      {"type": "member", "amount": 5}
+    ],
+    "finalAmount": 274.8
+  },
+  "message": "preview"
+}

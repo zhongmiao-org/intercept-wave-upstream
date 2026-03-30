@@ -4,7 +4,22 @@
 
 ## [未发布]
 
-- 暂无变更。
+### 新增
+- HTTP：新增适合多规则转发验证的路由别名接口
+  - User 服务：`/user/info`、`/users`、`/users/{id}/preferences`、`/admin/stats`
+  - Order 服务：`/orders`、`/orders/{id}`、`/admin/orders/summary`、`/order/{id}/submit`
+  - Payment 服务：`/checkout/preview`、`/refunds`、`POST /refunds`、`/callbacks/alipay`
+- 资源：补充多路由与 `stripPrefix` 场景所需的 JSON 样例数据
+  - User：用户列表、管理统计、偏好设置
+  - Order：详情、管理汇总、提交响应
+  - Payment：预览、退款、回调响应
+
+### 变更
+- 文档：扩展 README，补充多路由配置、`stripPrefix` 别名接口，以及 `/` + `/api` + `/api/admin` 验证示例
+- 资源加载：增强 `assets/` 目录解析逻辑，保证包级测试也能复用同一套样例数据
+
+### 修复
+- 测试：新增 HTTP 覆盖，验证路由别名、动态路径返回，以及退款创建行为
 
 ## [0.2.0] - 2025-11-12
 
@@ -76,4 +91,3 @@
 - 单元测试：
   - HTTP：验证服务启动及 `GET /order-api/orders` 返回 `{ code: 0, ... }`
   - WS：验证 echo 连接与消息回显
-

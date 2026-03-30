@@ -1,0 +1,20 @@
+{
+  "code": 0,
+  "data": [
+    {
+      "refundId": "RF-00001",
+      "orderId": "2001",
+      "status": "SUCCESS",
+      "amount": 49.9,
+      "reason": "duplicate payment"
+    },
+    {
+      "refundId": "RF-00002",
+      "orderId": "2002",
+      "status": "PENDING",
+      "amount": 19.9,
+      "reason": "partial return"
+    }
+  ],
+  "message": "success"
+}

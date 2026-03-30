@@ -1,0 +1,43 @@
+{
+    "version": "3.1",
+    "proxyGroups": [
+        {
+            "id": "f1ac8196-cd52-40ff-8d6a-2fadfb65d2c6",
+            "name": "默认配置",
+            "port": 8888,
+            "interceptPrefix": "/api",
+            "baseUrl": "http://localhost:8080",
+            "stripPrefix": true,
+            "globalCookie": "",
+            "enabled": true,
+            "mockApis": [],
+            "protocol": "HTTP",
+            "wsBaseUrl": null,
+            "wsInterceptPrefix": null,
+            "wsManualPush": true,
+            "wsPushRules": [],
+            "wssEnabled": false,
+            "wssKeystorePath": null,
+            "wssKeystorePassword": null
+        },
+        {
+            "id": "baada500-4b64-4f19-968a-476effbc5da3",
+            "name": "test",
+            "enabled": true,
+            "port": 8889,
+            "interceptPrefix": "/api",
+            "baseUrl": "http://localhost:8080",
+            "stripPrefix": true,
+            "globalCookie": "",
+            "mockApis": [],
+            "protocol": "WS",
+            "wsBaseUrl": null,
+            "wsInterceptPrefix": null,
+            "wsManualPush": true,
+            "wsPushRules": [],
+            "wssEnabled": false,
+            "wssKeystorePath": null,
+            "wssKeystorePassword": null
+        }
+    ]
+}

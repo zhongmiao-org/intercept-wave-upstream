@@ -12,6 +12,15 @@ func AssetsDir() string {
 	if v := os.Getenv("ASSETS_DIR"); v != "" {
 		return v
 	}
+	candidates := []string{
+		"assets",
+		filepath.Join("..", "..", "assets"),
+	}
+	for _, candidate := range candidates {
+		if st, err := os.Stat(candidate); err == nil && st.IsDir() {
+			return candidate
+		}
+	}
 	return "assets"
 }
 
@@ -23,12 +32,12 @@ func JoinAssets(parts ...string) string {
 }
 
 // LoadJSONDynamic loads a JSON file into an untyped Go value (map/array/etc).
-func LoadJSONDynamic(path string) (any, error) {
+func LoadJSONDynamic(path string) (interface{}, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	var v any
+	var v interface{}
 	if err := json.Unmarshal(b, &v); err != nil {
 		return nil, err
 	}

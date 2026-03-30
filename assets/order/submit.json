@@ -1,0 +1,9 @@
+{
+  "code": 0,
+  "message": "submit ok",
+  "data": {
+    "accepted": true,
+    "queue": "fulfillment",
+    "etaMinutes": 15
+  }
+}

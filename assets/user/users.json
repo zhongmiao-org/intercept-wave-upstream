@@ -1,0 +1,31 @@
+{
+  "code": 0,
+  "data": [
+    {
+      "id": 1,
+      "name": "张三",
+      "status": "active",
+      "department": "platform",
+      "roles": ["admin", "editor"]
+    },
+    {
+      "id": 2,
+      "name": "李四",
+      "status": "pending",
+      "department": "ops",
+      "roles": ["viewer"]
+    },
+    {
+      "id": 3,
+      "name": "王五",
+      "status": "inactive",
+      "department": "sales",
+      "roles": ["editor", "auditor"]
+    }
+  ],
+  "meta": {
+    "total": 3,
+    "page": 1,
+    "pageSize": 20
+  }
+}

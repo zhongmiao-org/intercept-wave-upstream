@@ -6,7 +6,22 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 
 ## [Unreleased]
 
-- No changes yet.
+### Added
+- HTTP: route-friendly alias APIs for multi-route forwarding verification
+  - User service: `/user/info`, `/users`, `/users/{id}/preferences`, `/admin/stats`
+  - Order service: `/orders`, `/orders/{id}`, `/admin/orders/summary`, `/order/{id}/submit`
+  - Payment service: `/checkout/preview`, `/refunds`, `POST /refunds`, `/callbacks/alipay`
+- Assets: additional JSON fixtures for multi-route and strip-prefix scenarios
+  - User: user list, admin stats, preferences
+  - Order: detail, admin summary, submit response
+  - Payment: preview, refunds, callback response
+
+### Changed
+- Docs: expand README examples for multi-route setups, strip-prefix aliases, and `/` + `/api` + `/api/admin` verification flows
+- Asset loading: resolve `assets/` more robustly so package-level tests can reuse the same fixture set
+
+### Fixed
+- Tests: add HTTP coverage for route-friendly aliases, dynamic path payloads, and refund creation behavior
 
 ## [0.2.0] - 2025-11-12
 
