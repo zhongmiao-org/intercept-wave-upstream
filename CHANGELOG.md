@@ -68,7 +68,7 @@ The format is inspired by Keep a Changelog, and this project adheres to Semantic
 
 
 ### Added
-- Go 1.25 module that boots a lightweight upstream test orchestrator for Intercept Wave.
+- Go 1.26 module that boots a lightweight upstream test orchestrator for Intercept Wave.
 - 3 HTTP services on consecutive ports (BASE_PORT..BASE_PORT+2, default 9000–9002), each providing shared utility endpoints:
   - `GET /` – service info (includes `interceptPrefix`)
   - `GET /health`

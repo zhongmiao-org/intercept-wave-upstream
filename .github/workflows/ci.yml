@@ -20,7 +20,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.x'
+          go-version: '1.26.1'
           cache: true
 
       - name: Tidy modules
@@ -44,44 +44,28 @@ jobs:
           if [ -n "$CHANGED" ]; then
             echo "Run: gofmt -s -w ."; echo "$CHANGED"; exit 1; fi
 
-  qodana:
-    name: Qodana
-    if: ${{ vars.ENABLE_QODANA == 'true' && secrets.QODANA_TOKEN != '' }}
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      checks: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
 
-      - name: Qodana Scan
-        uses: JetBrains/qodana-action@v2025.2
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          pr-mode: false
-          cache-default-branch-only: true
-        env:
-          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
-          QODANA_ENDPOINT: 'https://qodana.cloud'
+          go-version: '1.26.1'
+          cache: true
 
-  qodana-skip:
-    name: Qodana Skipped
-    if: ${{ !(vars.ENABLE_QODANA == 'true' && secrets.QODANA_TOKEN != '') }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Explain skip
-        run: |
-          echo "Qodana was skipped."
-          echo "Set repository variable ENABLE_QODANA=true and configure a valid QODANA_TOKEN to enable it."
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.1
 
   releaseDraft:
     name: Release draft
     if: github.event_name != 'pull_request'
-    needs: [ build, qodana, qodana-skip ]
+    needs: [ build, lint ]
     runs-on: ubuntu-latest
     permissions:
       contents: write

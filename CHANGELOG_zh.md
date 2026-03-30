@@ -63,7 +63,7 @@
 ## [0.1.0] - 2025-11-06
 
 ### 新增
-- Go 1.25 模块：用于启动 Intercept Wave 的轻量上游测试编排器
+- Go 1.26 模块：用于启动 Intercept Wave 的轻量上游测试编排器
 - 3 个 HTTP 服务（端口：`BASE_PORT..BASE_PORT+2`，默认 9000–9002），提供通用调试接口：
   - `GET /` – 服务信息
   - `GET /health`
