@@ -1,21 +1,25 @@
 # Multi-stage build for a tiny static image
-FROM golang:1.25-alpine AS build
+FROM golang:1.26-alpine AS build
 WORKDIR /src
+
+ARG TARGETOS
+ARG TARGETARCH
 
 # Install build tools (optional)
 RUN apk add --no-cache git ca-certificates && update-ca-certificates
 
 # Module download
 COPY go.mod .
+COPY go.sum .
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 
 # Source
 COPY . .
 
-# Build static binary for linux/amd64
+# Build a static binary matching the current buildx target platform.
 RUN --mount=type=cache,target=/go/pkg/mod \
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
     go build -trimpath -ldflags "-s -w" -o /out/upstream ./main.go
 
 # Final minimal image
